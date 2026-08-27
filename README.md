@@ -8,6 +8,8 @@ Local-first memory · app-specific habits · evidence-based coaching · self-gro
 
 </div>
 
+![EvoPilot demo](docs/demo.gif)
+
 EvoPilot observes privacy-minimized workflow signals, learns only from repeated evidence, and turns successful patterns into reusable Codex extensions. It can act autonomously on local, recoverable work while requiring a person before dangerous or externally consequential actions.
 
 > **The goal is not unrestricted self-modification.** EvoPilot evolves through versioned workflows, tests, promotion thresholds, and rollback.
@@ -120,6 +122,8 @@ python plugins/evopilot/scripts/evopilot.py context
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for extension guidelines and [ROADMAP.md](ROADMAP.md) for planned work.
+
+Ready-to-use launch copy is available in [LAUNCH.md](LAUNCH.md).
 
 ## Current limits
 
