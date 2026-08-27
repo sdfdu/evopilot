@@ -1,3 +1,12 @@
+# EvoPilot v0.1.2
+
+## Fixes
+
+- Negotiate the MCP protocol revision requested during initialization instead of pinning the obsolete `2025-03-26` revision.
+- Enable unbuffered UTF-8 I/O for reliable Windows plugin paths and stdio communication.
+- Accept a missing or null hook working directory and report the exception type when memory startup fails.
+- Test MCP startup from installed paths containing spaces and Unicode characters.
+
 # EvoPilot v0.1.0
 
 The first public release of EvoPilot: a local-first Codex copilot that learns proven work habits and grows through safe, versioned extensions.

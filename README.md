@@ -50,6 +50,18 @@ codex plugin marketplace add .
 
 Then install **EvoPilot** from the Codex plugin interface and start a new task. MCP enablement remains under your Codex approval configuration.
 
+### Verify memory tools
+
+After installing or upgrading, fully restart Codex and start a new task. Ask:
+
+```text
+Use EvoPilot to remember that I prefer concise answers.
+```
+
+Then start another task and ask EvoPilot to show its learned context. If the task reports that memory is unavailable or the `evopilot-memory` server shows zero tools, update to v0.1.2 or later and restart Codex. EvoPilot v0.1.2 negotiates the MCP protocol version requested by current Codex releases and enables UTF-8 explicitly for Windows paths.
+
+For diagnosis, run the bundled server directly and send it `initialize` followed by `tools/list`. Errors are written to stderr, while stdout remains valid newline-delimited JSON-RPC. Do not edit files inside the Codex plugin cache; reinstall or update the plugin instead.
+
 If you prefer GitHub shorthand, add the marketplace directly with `codex plugin marketplace add sdfdu/evopilot`.
 
 On the first new task, review and trust the bundled hooks when Codex asks. Then use the initialization prompt once:

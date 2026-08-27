@@ -4,7 +4,10 @@
       "command": "python",
       "args": ["${PLUGIN_ROOT}/mcp/server.py"],
       "env": {
-        "EVOPILOT_DATA": "${PLUGIN_DATA}"
+        "EVOPILOT_DATA": "${PLUGIN_DATA}",
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONUTF8": "1"
       }
     }
   }

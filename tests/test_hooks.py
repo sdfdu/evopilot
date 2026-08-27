@@ -14,6 +14,41 @@ PLUGIN = ROOT / "plugins" / "evopilot"
 
 
 class HookTests(unittest.TestCase):
+    def test_session_start_accepts_null_cwd(self):
+        with tempfile.TemporaryDirectory() as temp:
+            env = {
+                **os.environ,
+                "EVOPILOT_DATA": temp,
+                "PLUGIN_DATA": temp,
+                "PLUGIN_ROOT": str(PLUGIN),
+            }
+            result = subprocess.run(
+                [sys.executable, str(PLUGIN / "hooks" / "session_start.py")],
+                input=json.dumps({"cwd": None}),
+                text=True,
+                capture_output=True,
+                env=env,
+                check=True,
+            )
+            payload = json.loads(result.stdout)
+            context = payload["hookSpecificOutput"]["additionalContext"]
+            self.assertIn("No learned preferences yet", context)
+            self.assertEqual(result.stderr, "")
+
+    def test_session_start_reports_failure_type(self):
+        result = subprocess.run(
+            [sys.executable, str(PLUGIN / "hooks" / "session_start.py")],
+            input="not-json",
+            text=True,
+            capture_output=True,
+            env={**os.environ, "PLUGIN_ROOT": str(PLUGIN)},
+            check=True,
+        )
+        payload = json.loads(result.stdout)
+        context = payload["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("JSONDecodeError", context)
+        self.assertIn("EvoPilot SessionStart error (JSONDecodeError)", result.stderr)
+
     def test_observe_hook_minimizes_stored_data(self):
         with tempfile.TemporaryDirectory() as temp:
             env = {
