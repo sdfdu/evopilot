@@ -35,7 +35,7 @@ def respond(message):
  method=message.get("method");ident=message.get("id")
  if ident is None:return None
  try:
-  if method=="initialize": result={"protocolVersion":"2025-03-26","capabilities":{"tools":{}},"serverInfo":{"name":"evopilot","version":"0.1.0"}}
+  if method=="initialize": result={"protocolVersion":"2025-03-26","capabilities":{"tools":{}},"serverInfo":{"name":"evopilot","version":"0.1.1"}}
   elif method=="tools/list": result={"tools":TOOLS}
   elif method=="tools/call": result=call(message["params"]["name"],message["params"].get("arguments",{}))
   elif method=="ping": result={}

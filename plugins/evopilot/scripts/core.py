@@ -11,7 +11,12 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION = 1
-SENSITIVE = re.compile(r"(api[_ -]?key|token|password|secret|credential|private[_ -]?key)", re.I)
+SENSITIVE = re.compile(
+    r"(api[_ -]?key|access[_ -]?token|refresh[_ -]?token|token|password|passcode|"
+    r"secret|credential|private[_ -]?key|ssh[_ -]?key|authorization|"
+    r"auth[_ -]?header|bearer(?:\s+|%20)|cookie|session[_ -]?token)",
+    re.I,
+)
 DANGEROUS = {
     "delete", "destructive", "publish", "send_external", "purchase", "payment",
     "login", "credential", "system_setting", "install_system", "enable_mcp",
@@ -155,7 +160,9 @@ def analyze_habits(min_count: int = 3) -> list[dict[str, Any]]:
 
 def review_action(action: str, details: str = "") -> dict[str, str]:
     normalized = action.strip().lower().replace("-", "_").replace(" ", "_")
-    if normalized in DANGEROUS or any(term in normalized for term in DANGEROUS):
+    normalized_details = details.strip().lower().replace("-", "_").replace(" ", "_")
+    risk_text = f"{normalized} {normalized_details}"
+    if any(term in risk_text for term in DANGEROUS) or SENSITIVE.search(details):
         result = {"decision": "human_required", "risk": "high", "reason": "This action can affect external systems, permissions, money, credentials, or recoverability."}
     elif normalized in LOW_RISK:
         result = {"decision": "allow", "risk": "low", "reason": "The action is local, scoped, and recoverable."}

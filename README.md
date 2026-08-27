@@ -26,7 +26,7 @@ observe → detect a pattern → trial a workflow → measure outcomes
 ## What ships today
 
 - **Local adaptive memory** backed by SQLite; no cloud account or API key required.
-- **Privacy-minimized hooks** that record tool categories and outcomes, never raw tool input/output.
+- **Privacy-minimized hooks** that record tool categories, outcomes, and a one-way workspace hash, never raw paths or tool input/output.
 - **Dynamic habit detection** with evidence and success thresholds.
 - **Human-in-the-loop policy** for publication, deletion, credentials, purchases, system settings, and MCP enablement.
 - **Dependency-free MCP server** exposing memory, observation, habit analysis, export, deletion, and action review tools.
@@ -51,6 +51,12 @@ codex plugin marketplace add .
 Then install **EvoPilot** from the Codex plugin interface and start a new task. MCP enablement remains under your Codex approval configuration.
 
 If you prefer GitHub shorthand, add the marketplace directly with `codex plugin marketplace add sdfdu/evopilot`.
+
+On the first new task, review and trust the bundled hooks when Codex asks. Then use the initialization prompt once:
+
+```text
+Initialize EvoPilot with my preferences: discuss before building, recommend a default, act autonomously on local recoverable work, and ask immediately before dangerous or external actions.
+```
 
 Try:
 

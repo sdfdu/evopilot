@@ -18,6 +18,8 @@ class EvoPilotTests(unittest.TestCase):
   self.assertIn("conclusion first",context())
  def test_secrets_are_rejected(self):
   with self.assertRaises(ValueError):remember("api_key","abc123")
+  with self.assertRaises(ValueError):remember("auth_header","Bearer example-value")
+  with self.assertRaises(ValueError):remember("login","passcode: 123456")
  def test_habit_requires_repetition(self):
   for _ in range(2):observe("vscode","run tests","success")
   self.assertEqual(analyze_habits(3),[])
@@ -27,8 +29,9 @@ class EvoPilotTests(unittest.TestCase):
   self.assertEqual(review_action("publish")["decision"],"human_required")
   self.assertEqual(review_action("mystery-action")["decision"],"human_required")
   self.assertEqual(review_action("run_tests")["decision"],"allow")
+  self.assertEqual(review_action("write_workspace","then publish externally")["decision"],"human_required")
+  self.assertEqual(review_action("read","open the password file")["decision"],"human_required")
  def test_forget_is_explicit(self):
   remember("tone","direct");self.assertTrue(forget("tone"));self.assertFalse(forget("tone"))
 
 if __name__=="__main__":unittest.main()
-

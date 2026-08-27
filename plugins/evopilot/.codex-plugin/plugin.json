@@ -1,6 +1,6 @@
 {
   "name": "evopilot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A local-first Codex copilot that learns proven work habits and promotes them into safe, reusable extensions.",
   "author": {
     "name": "duke"
@@ -8,7 +8,13 @@
   "license": "MIT",
   "homepage": "https://github.com/sdfdu/evopilot",
   "repository": "https://github.com/sdfdu/evopilot.git",
-  "keywords": ["adaptive-agent", "memory", "skills", "mcp", "productivity"],
+  "keywords": [
+    "adaptive-agent",
+    "memory",
+    "skills",
+    "mcp",
+    "productivity"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Evopilot",
@@ -16,9 +22,13 @@
     "longDescription": "EvoPilot learns evidence-backed preferences and app habits, detects recurring friction, promotes successful workflows into Skills, and drafts MCP integrations behind human approval gates.",
     "developerName": "duke",
     "category": "Productivity",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
     "brandColor": "#6D5DFB",
     "defaultPrompt": [
+      "Initialize EvoPilot with my preferences: discuss before building, recommend a default, act autonomously on local recoverable work, and ask immediately before dangerous or external actions.",
       "Use EvoPilot to help me develop this idea before building it.",
       "Show what EvoPilot has learned about my workflow.",
       "Analyze my repeated friction and propose the next extension."
