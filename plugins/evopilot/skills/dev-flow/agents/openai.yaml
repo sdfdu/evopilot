@@ -1,0 +1,5 @@
+interface:
+  display_name: "Dev Flow"
+  short_description: "Adaptive coding, testing, and delivery"
+  default_prompt: "Implement this using my proven development habits and verify the result."
+

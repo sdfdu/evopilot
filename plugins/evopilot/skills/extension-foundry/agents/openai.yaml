@@ -1,0 +1,4 @@
+interface:
+  display_name: "Extension Foundry"
+  short_description: "Turn proven habits into safe extensions"
+  default_prompt: "Analyze my repeated workflows and propose or build the next safe EvoPilot extension."

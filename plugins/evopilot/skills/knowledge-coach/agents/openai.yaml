@@ -1,0 +1,5 @@
+interface:
+  display_name: "Knowledge Coach"
+  short_description: "Evidence-based learning and friction analysis"
+  default_prompt: "Help me learn from this work, including what improved and where I repeatedly got stuck."
+

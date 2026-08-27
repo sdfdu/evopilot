@@ -1,0 +1,5 @@
+interface:
+  display_name: "Tool Operator"
+  short_description: "Fast tool routing with human approval gates"
+  default_prompt: "Use the right tools to complete this, pausing only for dangerous or external actions."
+

@@ -1,0 +1,20 @@
+{
+  "name": "evopilot",
+  "interface": {
+    "displayName": "EvoPilot"
+  },
+  "plugins": [
+    {
+      "name": "evopilot",
+      "source": {
+        "source": "local",
+        "path": "./plugins/evopilot"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

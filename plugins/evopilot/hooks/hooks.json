@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${PLUGIN_ROOT}/hooks/session_start.py\"",
+            "statusMessage": "Loading EvoPilot memory"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|apply_patch|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${PLUGIN_ROOT}/hooks/observe_tool.py\"",
+            "async": true,
+            "statusMessage": "Learning workflow patterns"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Automation Watcher"
+  short_description: "Useful reminders and low-noise monitoring"
+  default_prompt: "Set up a useful follow-up or recurring check for this work."
+

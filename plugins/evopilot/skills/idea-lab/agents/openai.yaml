@@ -1,0 +1,5 @@
+interface:
+  display_name: "Idea Lab"
+  short_description: "Discuss, decide, then build the right thing"
+  default_prompt: "Help me develop this idea through choices. Wait to build until I say generate."
+

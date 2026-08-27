@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "evopilot-memory": {
+      "command": "python",
+      "args": ["${PLUGIN_ROOT}/mcp/server.py"],
+      "env": {
+        "EVOPILOT_DATA": "${PLUGIN_DATA}"
+      }
+    }
+  }
+}
