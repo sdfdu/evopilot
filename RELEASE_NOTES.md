@@ -1,3 +1,14 @@
+# EvoPilot v0.2.0 (local candidate)
+
+## Highlights
+
+- Learn repeated multi-step tool sequences with evidence and success thresholds.
+- Preserve memory corrections and conflicts; decay stale inferred confidence without weakening explicit preferences.
+- Block risky and unknown Bash/MCP calls before execution, with exact single-use approvals after human confirmation.
+- Generate review-only Skill drafts from proven workflows.
+- Produce evidence-based weekly learning reports.
+- Expand the MCP surface from 7 to 13 tools and migrate v0.1 databases in place.
+
 # EvoPilot v0.1.2
 
 ## Fixes

@@ -7,13 +7,15 @@ description: Analyze repeated EvoPilot observations and promote proven workflows
 
 Evolve capability through promotion, testing, and rollback rather than uncontrolled self-modification.
 
-1. Run `evopilot_analyze_habits`; ignore patterns supported by fewer than three observations.
-2. At three observations, describe a candidate habit. At five with successful outcomes, draft a workflow. At eight with at least three successes, consider it stable.
+1. Run `evopilot_analyze_sequences`; use `evopilot_analyze_habits` only to inspect individual actions. Ignore patterns supported by fewer than three observations.
+2. At three observations, describe a candidate workflow. At five with at least three successful outcomes, it becomes `draft_ready`. At eight with at least three successes, consider it stable.
 3. Prefer a Skill when existing tools are sufficient. Add a deterministic script for repeatable mechanics.
 4. Draft an MCP server only when live data, authentication, controlled external actions, or a missing tool genuinely requires one.
-5. Keep generated artifacts versioned and test them in an isolated workspace.
+5. Use `evopilot_draft_skill` only for a `draft_ready` or `stable` fingerprint. Keep the generated artifact uninstalled, versioned, and tested in an isolated workspace.
 6. Compare success rate, retries, corrections, time, and user acceptance against the previous workflow.
-7. Automatically activate only local low-risk Skills that pass validation. Require human approval before installing or enabling MCP, adding credentials, expanding access, or publishing.
+7. Never automatically activate generated Skills. Require human review after validation, and require human approval before installing or enabling MCP, adding credentials, expanding access, or publishing.
 8. Roll back when the new workflow performs worse or routes unrelated requests.
 
 Never modify EvoPilot's approval policy through learned behavior. Explicit user instructions outrank learned memories.
+
+When the PreToolUse gate blocks an exact action, show its approval ID and ask the user. Call `evopilot_authorize_once` only after the user explicitly confirms that action, then retry it once.

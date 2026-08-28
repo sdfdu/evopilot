@@ -27,9 +27,12 @@ observe → detect a pattern → trial a workflow → measure outcomes
 
 - **Local adaptive memory** backed by SQLite; no cloud account or API key required.
 - **Privacy-minimized hooks** that record tool categories, outcomes, and a one-way workspace hash, never raw paths or tool input/output.
-- **Dynamic habit detection** with evidence and success thresholds.
-- **Human-in-the-loop policy** for publication, deletion, credentials, purchases, system settings, and MCP enablement.
-- **Dependency-free MCP server** exposing memory, observation, habit analysis, export, deletion, and action review tools.
+- **Sequence learning** that identifies repeated two-to-four-step workflows and measures their outcomes.
+- **Governed memory** with scope, explicit vs. inferred sources, corrections, conflicts, history, and confidence decay for stale inferences.
+- **Enforced human-in-the-loop gate** that blocks risky tool calls until the exact action receives a short-lived, single-use approval.
+- **Reviewable Skill drafts** generated only after a workflow passes evidence and success thresholds; drafts are never auto-installed.
+- **Weekly learning reports** covering outcomes, failures, corrections, conflicts, common actions, and promotion candidates.
+- **Dependency-free MCP server** exposing 13 memory, learning, reporting, drafting, export, and approval tools.
 - Six focused Skills:
   - `idea-lab` — discuss and decide before building.
   - `dev-flow` — adapt coding and verification to proven habits.
@@ -100,6 +103,15 @@ Analyze my repeated friction and propose the next safe extension.
 
 Language-model instructions are not the only control. Keep Codex sandboxing, approvals, filesystem boundaries, and network policy enabled for independent enforcement.
 
+### Exact-action approval flow
+
+Codex currently does not support forcing a native approval prompt from a `PreToolUse` hook. EvoPilot therefore uses a fail-closed two-step flow:
+
+1. A risky or unknown Bash/MCP action is denied before execution and receives a 24-character approval ID.
+2. After the user explicitly confirms that exact action, call `evopilot_authorize_once` with the ID and retry it.
+
+The authorization expires after ten minutes, works once, and is bound to a hash of the tool name and complete tool input. Changed arguments produce a different ID. EvoPilot never stores the raw tool input in the approval record.
+
 ## Learning without becoming creepy
 
 EvoPilot stores structured, inspectable records locally. It rejects obvious secrets, redacts sensitive metadata, and deliberately avoids saving raw tool arguments and responses.
@@ -110,7 +122,10 @@ A preference carries:
 - evidence count;
 - scope;
 - risk classification;
-- timestamps.
+- timestamps;
+- an explicit or inferred source;
+- correction and conflict history;
+- read-time confidence decay for unconfirmed inferences.
 
 One correction is evidence. Repeated successful behavior becomes a candidate workflow. Permissions never become implicit through repetition.
 
@@ -136,6 +151,8 @@ No third-party Python packages are required.
 python -m unittest discover -s tests -v
 python plugins/evopilot/scripts/evopilot.py observe vscode run-tests --outcome success
 python plugins/evopilot/scripts/evopilot.py habits
+python plugins/evopilot/scripts/evopilot.py sequences
+python plugins/evopilot/scripts/evopilot.py report --days 7
 python plugins/evopilot/scripts/evopilot.py context
 ```
 
@@ -145,9 +162,10 @@ Ready-to-use launch copy is available in [LAUNCH.md](LAUNCH.md).
 
 ## Current limits
 
-- Habit analysis in v0.1 uses transparent frequency and outcome rules, not semantic sequence mining.
+- Sequence learning is transparent rule-based mining, not model-weight training or semantic imitation.
 - Hooks see Codex tool events, not every gesture performed inside arbitrary desktop applications.
-- Generated MCP servers are drafts until a user reviews permissions and explicitly enables them.
+- Generated Skills remain drafts until a user reviews and installs them; EvoPilot does not generate or enable credentialed MCP servers automatically.
+- The approval gate recognizes deterministic command and tool-name patterns; it complements, but does not replace, Codex sandbox and native approval controls.
 - EvoPilot does not train or modify model weights.
 
 ## License

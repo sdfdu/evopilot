@@ -1,6 +1,6 @@
 {
   "name": "evopilot",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "A local-first Codex copilot that learns proven work habits and promotes them into safe, reusable extensions.",
   "author": {
     "name": "duke"
@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Evopilot",
     "shortDescription": "A Codex copilot that improves with use.",
-    "longDescription": "EvoPilot learns evidence-backed preferences and app habits, detects recurring friction, promotes successful workflows into Skills, and drafts MCP integrations behind human approval gates.",
+    "longDescription": "EvoPilot learns evidence-backed preferences and multi-step workflows, preserves corrections and conflicts, drafts successful workflows into reviewable Skills, and blocks risky actions until a person grants an exact one-time approval.",
     "developerName": "duke",
     "category": "Productivity",
     "capabilities": [
@@ -30,8 +30,7 @@
     "defaultPrompt": [
       "Initialize EvoPilot with my preferences: discuss before building, recommend a default, act autonomously on local recoverable work, and ask immediately before dangerous or external actions.",
       "Use EvoPilot to help me develop this idea before building it.",
-      "Show what EvoPilot has learned about my workflow.",
-      "Analyze my repeated friction and propose the next extension."
+      "Show what EvoPilot has learned and generate my weekly learning report."
     ]
   },
   "mcpServers": "./.mcp.json"

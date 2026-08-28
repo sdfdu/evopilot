@@ -81,12 +81,45 @@ class HookTests(unittest.TestCase):
 
             metadata = json.loads(row[3])
             expected_hash = hashlib.sha256(cwd.casefold().encode()).hexdigest()[:16]
-            self.assertEqual(row[:3], ("github", "mcp__github__search", "success"))
-            self.assertEqual(metadata, {"workspace_hash": expected_hash})
+            self.assertEqual(row[:3], ("github", "mcp_search", "success"))
+            self.assertEqual(metadata, {"workspace_hash": expected_hash, "tool_family": "mcp"})
             serialized = json.dumps(metadata)
             self.assertNotIn(cwd, serialized)
             self.assertNotIn("private-input-marker", serialized)
             self.assertNotIn("private-output-marker", serialized)
+
+    def run_gate(self, event, data_dir):
+        env = {**os.environ, "EVOPILOT_DATA": data_dir, "PLUGIN_DATA": data_dir, "PLUGIN_ROOT": str(PLUGIN)}
+        return subprocess.run(
+            [sys.executable, str(PLUGIN / "hooks" / "policy_gate.py")],
+            input=json.dumps(event), text=True, capture_output=True, env=env, check=True,
+        )
+
+    def test_policy_gate_allows_low_risk_and_blocks_external_write(self):
+        with tempfile.TemporaryDirectory() as temp:
+            safe = self.run_gate({"tool_name": "Bash", "tool_input": {"command": "python -m unittest"}}, temp)
+            self.assertEqual(safe.stdout, "")
+            blocked = self.run_gate({"tool_name": "mcp__github__create_issue", "tool_input": {"title": "Example"}}, temp)
+            payload = json.loads(blocked.stdout)
+            output = payload["hookSpecificOutput"]
+            self.assertEqual(output["permissionDecision"], "deny")
+            self.assertIn("evopilot_authorize_once", output["permissionDecisionReason"])
+
+    def test_policy_gate_consumes_exact_approval_once(self):
+        with tempfile.TemporaryDirectory() as temp:
+            event = {"tool_name": "Bash", "tool_input": {"command": "git push origin main"}}
+            first = self.run_gate(event, temp)
+            reason = json.loads(first.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
+            approval_id = reason.split("approval_id ", 1)[1].split(",", 1)[0]
+            env = {**os.environ, "EVOPILOT_DATA": temp, "PLUGIN_DATA": temp, "PLUGIN_ROOT": str(PLUGIN)}
+            subprocess.run(
+                [sys.executable, str(PLUGIN / "scripts" / "evopilot.py"), "approve", approval_id],
+                text=True, capture_output=True, env=env, check=True,
+            )
+            allowed = self.run_gate(event, temp)
+            self.assertEqual(allowed.stdout, "")
+            blocked_again = self.run_gate(event, temp)
+            self.assertEqual(json.loads(blocked_again.stdout)["hookSpecificOutput"]["permissionDecision"], "deny")
 
 
 if __name__ == "__main__":

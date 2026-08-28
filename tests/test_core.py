@@ -1,10 +1,10 @@
-import os, tempfile, unittest
+import os, sqlite3, tempfile, unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 import sys
 sys.path.insert(0,str(ROOT/"plugins"/"evopilot"/"scripts"))
-from core import analyze_habits, context, forget, observe, remember, review_action
+from core import analyze_habits, analyze_sequences, connect, context, draft_skill, forget, memories, memory_history, observe, remember, review_action, weekly_report
 
 class EvoPilotTests(unittest.TestCase):
  def setUp(self):
@@ -33,5 +33,54 @@ class EvoPilotTests(unittest.TestCase):
   self.assertEqual(review_action("read","open the password file")["decision"],"human_required")
  def test_forget_is_explicit(self):
   remember("tone","direct");self.assertTrue(forget("tone"));self.assertFalse(forget("tone"))
+  self.assertEqual(memory_history("tone")[0]["event"],"forgotten")
+
+ def test_inference_cannot_overwrite_explicit_memory(self):
+  remember("tone","direct",source="explicit")
+  result=remember("tone","cheerful",source="inferred")
+  self.assertFalse(result["stored_value_changed"])
+  self.assertEqual(memories()[0]["value"],"direct")
+  self.assertEqual(memory_history("tone")[0]["event"],"conflict")
+
+ def test_sequence_promotion_and_skill_draft(self):
+  for index in range(5):
+   session=f"task-{index}"
+   observe("workspace","inspect","success",session_id=session)
+   observe("workspace","edit","success",session_id=session)
+   observe("terminal","test","success",session_id=session)
+  sequences=analyze_sequences(3,4)
+  workflow=next(item for item in sequences if item["steps"]==["workspace:inspect","workspace:edit","terminal:test"])
+  self.assertEqual(workflow["status"],"draft_ready")
+  with tempfile.TemporaryDirectory() as drafts:
+   result=draft_skill(workflow["fingerprint"],Path(drafts))
+   text=Path(result["path"]).read_text(encoding="utf-8")
+   self.assertFalse(result["installed"])
+   self.assertIn("human approval",text)
+
+ def test_skill_draft_rejects_weak_evidence(self):
+  for index in range(3):
+   observe("workspace","inspect","success",session_id=f"weak-{index}")
+   observe("terminal","test","success",session_id=f"weak-{index}")
+  workflow=analyze_sequences(3,2)[0]
+  with tempfile.TemporaryDirectory() as drafts:
+   with self.assertRaises(ValueError):draft_skill(workflow["fingerprint"],Path(drafts))
+
+ def test_weekly_report_is_evidence_based(self):
+  observe("terminal","test","success",session_id="report")
+  observe("terminal","test","failure",session_id="report")
+  report=weekly_report(7)
+  self.assertIn("Observations: 2",report)
+  self.assertIn("50% successful",report)
+
+ def test_v1_database_migrates_without_data_loss(self):
+  path=Path(self.temp.name)/"evopilot.sqlite3"
+  db=sqlite3.connect(path)
+  db.execute("CREATE TABLE memories(key TEXT PRIMARY KEY,value TEXT NOT NULL,confidence REAL NOT NULL,evidence_count INTEGER NOT NULL,scope TEXT NOT NULL,risk TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)")
+  db.execute("INSERT INTO memories VALUES('format','concise',0.7,2,'global','low','2026-01-01T00:00:00+00:00','2026-01-01T00:00:00+00:00')")
+  db.commit();db.close()
+  migrated=connect();migrated.close()
+  item=memories()[0]
+  self.assertEqual(item["value"],"concise")
+  self.assertEqual(item["source"],"explicit")
 
 if __name__=="__main__":unittest.main()
