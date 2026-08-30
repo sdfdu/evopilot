@@ -7,6 +7,7 @@ import math
 import os
 import re
 import sqlite3
+import sys
 from collections import Counter
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
@@ -409,7 +410,7 @@ def weekly_report(days: int = 7) -> str:
     lines += [f"- {item['status']}: {' -> '.join(item['steps'])} ({item['evidence']} runs, {item['success_rate']:.0%} success)" for item in sequences[:5]] or ["- No repeated multi-step sequence has reached three observations yet."]
     lines += ["", "## Recommended next step"]
     if ready:
-        lines.append(f"- Review and draft the strongest proven sequence: {' -> '.join(ready[0]['steps'])}.")
+        lines.append(f"- Review and compile the strongest proven sequence: {' -> '.join(ready[0]['steps'])}.")
     elif outcomes["failure"] or outcomes["abandoned"]:
         lines.append("- Inspect the most frequent failed action before automating more work.")
     else:
@@ -422,21 +423,29 @@ def _skill_name(pattern: str) -> str:
     return name or "evopilot-workflow"
 
 
-def draft_skill(fingerprint: str, destination: Path) -> dict[str, Any]:
-    with database() as db:
-        row = db.execute("SELECT * FROM workflows WHERE fingerprint=?", (fingerprint,)).fetchone()
-    if not row:
-        raise ValueError("Unknown workflow fingerprint. Run sequence analysis first.")
-    if row["status"] not in {"draft_ready", "stable"}:
-        raise ValueError("Workflow needs at least five observations and three successful outcomes before drafting.")
-    definition = json.loads(row["definition_json"])
-    name = _skill_name(str(row["pattern"]))
+def _write_skill_bundle(
+    *,
+    fingerprint: str,
+    pattern: str,
+    definition: dict[str, Any],
+    evidence_count: int,
+    success_count: int,
+    status: str,
+    destination: Path,
+    simulated: bool = False,
+) -> dict[str, Any]:
+    name = _skill_name(pattern)
     skill_dir = Path(destination).resolve() / name
     skill_file = skill_dir / "SKILL.md"
-    if skill_file.exists():
-        raise FileExistsError(f"Draft already exists: {skill_file}")
+    evidence_file = skill_dir / "evopilot.json"
+    if skill_dir.exists():
+        raise FileExistsError(f"Bundle already exists: {skill_dir}")
     skill_dir.mkdir(parents=True, exist_ok=False)
     steps = "\n".join(f"{index}. {step}" for index, step in enumerate(definition.get("steps", []), 1))
+    completed = max(0, int(evidence_count))
+    successful = max(0, min(int(success_count), completed))
+    success_rate = successful / completed if completed else 0.0
+    demo_note = " This evidence is simulated for demonstration only." if simulated else ""
     body = f"""---
 name: {name}
 description: Run a locally learned workflow only when the user's task matches its trigger and the required tools are already authorized.
@@ -444,14 +453,15 @@ description: Run a locally learned workflow only when the user's task matches it
 
 # {name.replace('-', ' ').title()}
 
-This is an EvoPilot-generated draft. A person must review and validate it before installation.
+This is an EvoPilot-generated portable Skill bundle. A person must review and validate it before installation.{demo_note}
 
 ## Evidence
 
 - Fingerprint: `{fingerprint}`
-- Observations: {row['evidence_count']}
-- Successful outcomes: {row['success_count']}
-- Status: {row['status']}
+- Observations: {completed}
+- Successful outcomes: {successful}
+- Success rate: {success_rate:.0%}
+- Status: {status}
 
 ## Workflow
 
@@ -463,8 +473,120 @@ This is an EvoPilot-generated draft. A person must review and validate it before
 - Do not expand permissions, publish, delete material data, or use credentials without human approval.
 - Stop and ask when the current task does not match this learned sequence.
 """
+    evidence = {
+        "schema_version": 1,
+        "generated_at": utc_now(),
+        "generator": {"name": "EvoPilot", "version": "0.3.0"},
+        "format": "open-agent-skills",
+        "portable": True,
+        "simulated": simulated,
+        "workflow": {
+            "fingerprint": fingerprint,
+            "pattern": pattern,
+            "steps": definition.get("steps", []),
+            "status": status,
+        },
+        "evidence": {
+            "observations": completed,
+            "successful_outcomes": successful,
+            "success_rate": success_rate,
+        },
+        "review": {"state": "pending_human_review", "installed": False},
+    }
     skill_file.write_text(body, encoding="utf-8")
-    return {"path": str(skill_file), "name": name, "status": "draft", "installed": False, "requires_human_review": True}
+    evidence_file.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {
+        "path": str(skill_file),
+        "bundle": str(skill_dir),
+        "evidence_path": str(evidence_file),
+        "name": name,
+        "status": "compiled",
+        "format": "open-agent-skills",
+        "installed": False,
+        "requires_human_review": True,
+        "simulated": simulated,
+    }
+
+
+def compile_skill(fingerprint: str, destination: Path) -> dict[str, Any]:
+    with database() as db:
+        row = db.execute("SELECT * FROM workflows WHERE fingerprint=?", (fingerprint,)).fetchone()
+    if not row:
+        raise ValueError("Unknown workflow fingerprint. Run sequence analysis first.")
+    if row["status"] not in {"draft_ready", "stable"}:
+        raise ValueError("Workflow needs at least five observations and three successful outcomes before compilation.")
+    definition = json.loads(row["definition_json"])
+    return _write_skill_bundle(
+        fingerprint=fingerprint,
+        pattern=str(row["pattern"]),
+        definition=definition,
+        evidence_count=int(row["evidence_count"]),
+        success_count=int(row["success_count"]),
+        status=str(row["status"]),
+        destination=destination,
+    )
+
+
+def draft_skill(fingerprint: str, destination: Path) -> dict[str, Any]:
+    """Backward-compatible alias for compile_skill."""
+    return compile_skill(fingerprint, destination)
+
+
+def demo(destination: Path | None = None) -> dict[str, Any]:
+    """Return an honest, deterministic workflow-compiler demo without touching user data."""
+    steps = ["workspace:inspect", "workspace:apply_patch", "terminal:test"]
+    pattern = " -> ".join(steps)
+    fingerprint = hashlib.sha256(pattern.encode("utf-8")).hexdigest()[:16]
+    result: dict[str, Any] = {
+        "simulated": True,
+        "headline": "Repeated work becomes a reviewable, portable Agent Skill.",
+        "workflow": {"fingerprint": fingerprint, "steps": steps, "status": "draft_ready"},
+        "evidence": {"observations": 5, "successful_outcomes": 4, "success_rate": 0.8},
+        "stages": ["observe outcomes", "detect a repeated sequence", "compile a Skill bundle", "human review before installation"],
+        "user_data_changed": False,
+    }
+    if destination is not None:
+        result["artifact"] = _write_skill_bundle(
+            fingerprint=fingerprint,
+            pattern=pattern,
+            definition={"steps": steps},
+            evidence_count=5,
+            success_count=4,
+            status="draft_ready",
+            destination=destination,
+            simulated=True,
+        )
+    return result
+
+
+def doctor(plugin_root: Path | None = None) -> dict[str, Any]:
+    """Check the local runtime, plugin files, and database without exposing stored content."""
+    root = Path(plugin_root or os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1]).resolve()
+    checks: list[dict[str, Any]] = []
+
+    def add(name: str, ok: bool, detail: str, severity: str = "error") -> None:
+        checks.append({"name": name, "status": "ok" if ok else severity, "detail": detail})
+
+    version_ok = sys.version_info >= (3, 10)
+    add("python", version_ok, f"Python {sys.version.split()[0]} (3.10+ required)")
+    required = [root / ".mcp.json", root / "hooks" / "hooks.json", root / "mcp" / "server.py"]
+    missing = [path.relative_to(root).as_posix() for path in required if not path.is_file()]
+    add("plugin_files", not missing, "required files present" if not missing else f"missing: {', '.join(missing)}")
+    try:
+        with database() as db:
+            schema = int(db.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()[0])
+            observations = int(db.execute("SELECT COUNT(*) FROM observations").fetchone()[0])
+            active_memories = int(db.execute("SELECT COUNT(*) FROM memories WHERE status='active'").fetchone()[0])
+        add("database", schema == SCHEMA_VERSION, f"schema {schema}; {observations} observations; {active_memories} active memories")
+    except Exception as exc:
+        add("database", False, f"{type(exc).__name__}: {exc}")
+    ok = all(item["status"] == "ok" for item in checks)
+    return {
+        "ok": ok,
+        "version": "0.3.0",
+        "checks": checks,
+        "next_step": "Run `evopilot demo --destination <folder>` to see the workflow compiler." if ok else "Fix the failing checks, then run doctor again.",
+    }
 
 
 def export_data(destination: Path) -> Path:

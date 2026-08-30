@@ -1,4 +1,15 @@
-# EvoPilot v0.2.0 (local candidate)
+# EvoPilot v0.3.0 (local candidate)
+
+## Highlights
+
+- Reposition EvoPilot as a workflow compiler for AI agents.
+- Compile proven workflows into portable Open Agent Skills bundles containing `SKILL.md` and evidence-rich `evopilot.json`.
+- Add a deterministic 60-second demo that is clearly simulated and never modifies learned user data.
+- Add `doctor` diagnostics for the Python runtime, plugin files, and local database.
+- Expose `evopilot_compile_skill`, `evopilot_demo`, and `evopilot_doctor`, expanding the MCP surface from 13 to 16 tools.
+- Preserve the old `draft-skill` command and MCP tool as compatibility aliases.
+
+# EvoPilot v0.2.0
 
 ## Highlights
 

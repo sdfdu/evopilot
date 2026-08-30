@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 import sys
 sys.path.insert(0,str(ROOT/"plugins"/"evopilot"/"scripts"))
-from core import analyze_habits, analyze_sequences, connect, context, draft_skill, forget, memories, memory_history, observe, remember, review_action, weekly_report
+from core import analyze_habits, analyze_sequences, compile_skill, connect, context, demo, doctor, draft_skill, forget, memories, memory_history, observe, remember, review_action, weekly_report
 
 class EvoPilotTests(unittest.TestCase):
  def setUp(self):
@@ -54,8 +54,28 @@ class EvoPilotTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as drafts:
    result=draft_skill(workflow["fingerprint"],Path(drafts))
    text=Path(result["path"]).read_text(encoding="utf-8")
+   evidence=Path(result["evidence_path"]).read_text(encoding="utf-8")
    self.assertFalse(result["installed"])
+   self.assertEqual(result["format"],"open-agent-skills")
    self.assertIn("human approval",text)
+   self.assertIn('"observations": 5',evidence)
+
+ def test_compile_alias_demo_and_doctor(self):
+  for index in range(5):
+   observe("workspace","inspect","success",session_id=f"compile-{index}")
+   observe("terminal","test","success",session_id=f"compile-{index}")
+  workflow=analyze_sequences(3,2)[0]
+  with tempfile.TemporaryDirectory() as output:
+   compiled=compile_skill(workflow["fingerprint"],Path(output))
+   self.assertTrue(Path(compiled["bundle"]).is_dir())
+  db=connect();before=db.execute("SELECT COUNT(*) FROM observations").fetchone()[0];db.close()
+  result=demo()
+  db=connect();after=db.execute("SELECT COUNT(*) FROM observations").fetchone()[0];db.close()
+  self.assertTrue(result["simulated"])
+  self.assertFalse(result["user_data_changed"])
+  self.assertEqual(before,after)
+  diagnosis=doctor(ROOT/"plugins"/"evopilot")
+  self.assertTrue(diagnosis["ok"])
 
  def test_skill_draft_rejects_weak_evidence(self):
   for index in range(3):

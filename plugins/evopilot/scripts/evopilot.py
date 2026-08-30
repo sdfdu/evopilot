@@ -8,13 +8,13 @@ from pathlib import Path
 
 from core import (
     analyze_habits, analyze_sequences, authorize_once, context, correct_memory,
-    draft_skill, export_data, forget, memory_history, observe, remember,
-    review_action, weekly_report,
+    compile_skill, demo, doctor, draft_skill, export_data, forget, memory_history,
+    observe, remember, review_action, weekly_report,
 )
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="evopilot", description="Local-first adaptive memory for Codex")
+    parser = argparse.ArgumentParser(prog="evopilot", description="Local-first workflow compiler for AI agents")
     sub = parser.add_subparsers(dest="command", required=True)
     item = sub.add_parser("observe")
     item.add_argument("app")
@@ -52,6 +52,13 @@ def main() -> int:
     item = sub.add_parser("draft-skill")
     item.add_argument("fingerprint")
     item.add_argument("destination", type=Path)
+    item = sub.add_parser("compile-skill")
+    item.add_argument("fingerprint")
+    item.add_argument("destination", type=Path)
+    item = sub.add_parser("demo")
+    item.add_argument("--destination", type=Path)
+    item = sub.add_parser("doctor")
+    item.add_argument("--plugin-root", type=Path)
     item = sub.add_parser("report")
     item.add_argument("--days", type=int, default=7)
     item = sub.add_parser("export")
@@ -81,6 +88,12 @@ def main() -> int:
         result = authorize_once(args.approval_id, args.label)
     elif args.command == "draft-skill":
         result = draft_skill(args.fingerprint, args.destination)
+    elif args.command == "compile-skill":
+        result = compile_skill(args.fingerprint, args.destination)
+    elif args.command == "demo":
+        result = demo(args.destination)
+    elif args.command == "doctor":
+        result = doctor(args.plugin_root)
     elif args.command == "report":
         print(weekly_report(args.days))
         return 0

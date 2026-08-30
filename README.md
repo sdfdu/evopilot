@@ -2,170 +2,157 @@
 
 # EvoPilot
 
-### A Codex copilot that gets better at *your* work.
+### The workflow compiler for AI agents.
 
-Local-first memory · app-specific habits · evidence-based coaching · self-growing Skills · MCP with human approval
+Turn repeated work into evidence-backed, portable Agent Skills.
 
 </div>
 
-![EvoPilot demo](docs/demo.gif)
+![EvoPilot workflow compiler demo](docs/demo.gif)
 
-EvoPilot observes privacy-minimized workflow signals, learns only from repeated evidence, and turns successful patterns into reusable Codex extensions. It can act autonomously on local, recoverable work while requiring a person before dangerous or externally consequential actions.
+EvoPilot watches privacy-minimized outcomes, detects workflows that repeatedly succeed, and compiles them into reviewable [Open Agent Skills](https://agentskills.io/) bundles. It gives your agent a way to improve from real work without silently changing permissions or model weights.
 
-> **The goal is not unrestricted self-modification.** EvoPilot evolves through versioned workflows, tests, promotion thresholds, and rollback.
+> EvoPilot learns workflows, not personalities. Explicit user instructions always win, and generated Skills are never installed automatically.
 
-## Why EvoPilot?
+## See it in 60 seconds
 
-Most assistants start from zero every time. Static prompts remember rules but do not measure whether a workflow actually helped. EvoPilot adds a practical learning loop:
-
-```text
-observe → detect a pattern → trial a workflow → measure outcomes
-        → promote to Skill → draft MCP if needed → ask before new permissions
-```
-
-## What ships today
-
-- **Local adaptive memory** backed by SQLite; no cloud account or API key required.
-- **Privacy-minimized hooks** that record tool categories, outcomes, and a one-way workspace hash, never raw paths or tool input/output.
-- **Sequence learning** that identifies repeated two-to-four-step workflows and measures their outcomes.
-- **Governed memory** with scope, explicit vs. inferred sources, corrections, conflicts, history, and confidence decay for stale inferences.
-- **Enforced human-in-the-loop gate** that blocks risky tool calls until the exact action receives a short-lived, single-use approval.
-- **Reviewable Skill drafts** generated only after a workflow passes evidence and success thresholds; drafts are never auto-installed.
-- **Weekly learning reports** covering outcomes, failures, corrections, conflicts, common actions, and promotion candidates.
-- **Dependency-free MCP server** exposing 13 memory, learning, reporting, drafting, export, and approval tools.
-- Six focused Skills:
-  - `idea-lab` — discuss and decide before building.
-  - `dev-flow` — adapt coding and verification to proven habits.
-  - `tool-operator` — route tools quickly while preserving approval boundaries.
-  - `knowledge-coach` — evidence-based encouragement and friction analysis.
-  - `automation-watcher` — low-noise reminders and recurring checks.
-  - `extension-foundry` — promote proven workflows into Skills and MCP drafts.
-
-## Quick start
-
-Requirements: Codex desktop or CLI, Git, and Python 3.10+.
+Requirements: Python 3.10+.
 
 ```bash
 git clone https://github.com/sdfdu/evopilot.git
 cd evopilot
-codex plugin marketplace add .
+python plugins/evopilot/scripts/evopilot.py doctor
+python plugins/evopilot/scripts/evopilot.py demo --destination ./evopilot-demo
 ```
 
-Then install **EvoPilot** from the Codex plugin interface and start a new task. MCP enablement remains under your Codex approval configuration.
-
-### Verify memory tools
-
-After installing or upgrading, fully restart Codex and start a new task. Ask:
+The demo is clearly marked as simulated and never enters your learned history. It creates:
 
 ```text
-Use EvoPilot to remember that I prefer concise answers.
+evopilot-demo/
+└── workspace-inspect-workspace-apply-patch-terminal-test/
+    ├── SKILL.md       # portable workflow instructions
+    └── evopilot.json  # provenance, evidence, status, and review state
 ```
 
-Then start another task and ask EvoPilot to show its learned context. If the task reports that memory is unavailable or the `evopilot-memory` server shows zero tools, update to v0.1.2 or later and restart Codex. EvoPilot v0.1.2 negotiates the MCP protocol version requested by current Codex releases and enables UTF-8 explicitly for Windows paths.
+Open those two files to see the whole product loop: observe outcomes, detect repetition, compile a portable Skill, and require human review before installation.
 
-For diagnosis, run the bundled server directly and send it `initialize` followed by `tools/list`. Errors are written to stderr, while stdout remains valid newline-delimited JSON-RPC. Do not edit files inside the Codex plugin cache; reinstall or update the plugin instead.
+## Why it is useful
 
-If you prefer GitHub shorthand, add the marketplace directly with `codex plugin marketplace add sdfdu/evopilot`.
-
-On the first new task, review and trust the bundled hooks when Codex asks. Then use the initialization prompt once:
+AI agents are powerful, but most improvements remain trapped in chat history or one-off prompts. EvoPilot turns repeated success into a reusable artifact:
 
 ```text
-Initialize EvoPilot with my preferences: discuss before building, recommend a default, act autonomously on local recoverable work, and ask immediately before dangerous or external actions.
+work normally → measure outcomes → find repeated success → compile Skill → review → install
 ```
 
-Try:
+- **Faster recurring work:** package the inspect-edit-test or research-draft-review sequence you already use.
+- **More consistent agents:** keep a proven workflow as a versioned file instead of hoping the next conversation remembers it.
+- **Portable learning:** the compiled bundle follows the Open Agent Skills format rather than a private prompt database.
+- **Auditable evolution:** every bundle includes the evidence that qualified it for compilation.
+- **Controlled autonomy:** local, recoverable work can proceed; dangerous or externally consequential actions require a person.
+
+## Install in Codex
+
+```bash
+codex plugin marketplace add sdfdu/evopilot
+codex plugin add evopilot@evopilot
+```
+
+Fully restart Codex and start a new task so its Skills, hooks, and MCP tools load from the installed version. Then ask:
 
 ```text
-Use EvoPilot to help me develop this idea. Give me choices and wait until I say generate.
+Run the EvoPilot 60-second workflow compiler demo.
 ```
 
-```text
-Show what EvoPilot has learned about how I use my development tools.
-```
+Or initialize it for real work:
 
 ```text
-Analyze my repeated friction and propose the next safe extension.
+Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure repeated workflow outcomes, and show me which workflow is ready to become a portable Skill. Ask before dangerous or external actions.
 ```
+
+## What ships today
+
+- Local SQLite memory with explicit/inferred sources, conflicts, corrections, history, and confidence decay.
+- Privacy-minimized Codex hooks that store tool categories, outcomes, and a one-way workspace hash—not raw paths, arguments, or responses.
+- Transparent two-to-six-step workflow detection with evidence and success thresholds.
+- Portable Skill compilation with `SKILL.md` plus machine-readable `evopilot.json` provenance.
+- A deterministic demo that cannot contaminate real learning data.
+- `doctor` diagnostics for Python, plugin files, and database health.
+- Weekly evidence reports covering outcomes, failures, corrections, conflicts, and promotion candidates.
+- A dependency-free MCP server exposing 16 memory, learning, compilation, diagnostics, export, and approval tools.
+- Six focused Skills for ideation, development, tool operation, coaching, monitoring, and extension creation.
+
+## Evidence thresholds
+
+EvoPilot does not promote a sequence after one lucky run.
+
+| State | Requirement |
+|---|---|
+| Candidate | At least 3 observations |
+| Draft ready | At least 5 observations and 3 successful outcomes |
+| Stable | At least 8 observations and 3 successful outcomes |
+
+Compilation is allowed only for `draft_ready` or `stable` workflows. The result remains uninstalled with `pending_human_review` recorded in its evidence file.
 
 ## Safety model
 
 | Action | Default |
 |---|---|
-| Read/search/analyze | Autonomous |
-| Edit authorized workspace | Autonomous |
-| Run tests/builds | Autonomous |
-| Draft a Skill or MCP | Autonomous |
+| Read, search, analyze | Autonomous |
+| Edit an authorized workspace | Autonomous |
+| Run tests and builds | Autonomous |
+| Compile an uninstalled Skill bundle | Autonomous |
 | Delete material data | Human required |
 | Send, publish, purchase, or make public | Human required |
 | Use credentials or change system settings | Human required |
 | Enable a new MCP or expand access | Human required |
 | Unknown action | Fail closed; human required |
 
-Language-model instructions are not the only control. Keep Codex sandboxing, approvals, filesystem boundaries, and network policy enabled for independent enforcement.
+For risky Bash or MCP actions, EvoPilot blocks execution and returns an exact approval ID. After the user confirms that exact action, `evopilot_authorize_once` grants a ten-minute, single-use authorization bound to the complete tool call. Changed arguments require a new approval.
 
-### Exact-action approval flow
+EvoPilot complements—not replaces—Codex sandboxing, filesystem boundaries, network policy, and native approvals.
 
-Codex currently does not support forcing a native approval prompt from a `PreToolUse` hook. EvoPilot therefore uses a fail-closed two-step flow:
+## CLI
 
-1. A risky or unknown Bash/MCP action is denied before execution and receives a 24-character approval ID.
-2. After the user explicitly confirms that exact action, call `evopilot_authorize_once` with the ID and retry it.
+```bash
+python plugins/evopilot/scripts/evopilot.py doctor
+python plugins/evopilot/scripts/evopilot.py demo
+python plugins/evopilot/scripts/evopilot.py context
+python plugins/evopilot/scripts/evopilot.py sequences
+python plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> <destination>
+python plugins/evopilot/scripts/evopilot.py report --days 7
+```
 
-The authorization expires after ten minutes, works once, and is bound to a hash of the tool name and complete tool input. Changed arguments produce a different ID. EvoPilot never stores the raw tool input in the approval record.
-
-## Learning without becoming creepy
-
-EvoPilot stores structured, inspectable records locally. It rejects obvious secrets, redacts sensitive metadata, and deliberately avoids saving raw tool arguments and responses.
-
-A preference carries:
-
-- confidence;
-- evidence count;
-- scope;
-- risk classification;
-- timestamps;
-- an explicit or inferred source;
-- correction and conflict history;
-- read-time confidence decay for unconfirmed inferences.
-
-One correction is evidence. Repeated successful behavior becomes a candidate workflow. Permissions never become implicit through repetition.
+The older `draft-skill` command remains as a compatibility alias for `compile-skill`.
 
 ## Architecture
 
 ```text
-Codex
-├── Skills ───────────── workflow guidance and routing
-├── Hooks ────────────── privacy-minimized observations + session context
-├── EvoPilot MCP ─────── inspectable memory and policy tools
-└── Local data
-    ├── memories
-    ├── observations
-    ├── workflow candidates
-    └── approval audit
+Codex Skills ───── workflow guidance and routing
+Codex hooks ────── privacy-minimized observations + safety gate
+EvoPilot MCP ───── inspectable memory, analysis, compilation, and approvals
+Local SQLite ───── memories, outcomes, candidates, and audit history
+Portable bundle ── SKILL.md + evopilot.json
 ```
 
-No third-party Python packages are required.
+No third-party Python package is required at runtime.
 
 ## Local development
 
 ```bash
 python -m unittest discover -s tests -v
-python plugins/evopilot/scripts/evopilot.py observe vscode run-tests --outcome success
-python plugins/evopilot/scripts/evopilot.py habits
-python plugins/evopilot/scripts/evopilot.py sequences
-python plugins/evopilot/scripts/evopilot.py report --days 7
-python plugins/evopilot/scripts/evopilot.py context
+python plugins/evopilot/scripts/evopilot.py doctor --plugin-root plugins/evopilot
+python tools/render_demo.py
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for extension guidelines and [ROADMAP.md](ROADMAP.md) for planned work.
-
-Ready-to-use launch copy is available in [LAUNCH.md](LAUNCH.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), and [LAUNCH.md](LAUNCH.md).
 
 ## Current limits
 
-- Sequence learning is transparent rule-based mining, not model-weight training or semantic imitation.
-- Hooks see Codex tool events, not every gesture performed inside arbitrary desktop applications.
-- Generated Skills remain drafts until a user reviews and installs them; EvoPilot does not generate or enable credentialed MCP servers automatically.
-- The approval gate recognizes deterministic command and tool-name patterns; it complements, but does not replace, Codex sandbox and native approval controls.
+- Workflow detection is transparent rule-based sequence mining, not model training or semantic imitation.
+- Codex hooks see tool events, not every gesture inside arbitrary desktop applications.
+- A compiled Skill is a proposal. A user must review, validate, and install it.
+- EvoPilot does not generate or enable credentialed MCP servers automatically.
+- The policy gate uses deterministic command and tool-name patterns and cannot prove that every command is safe.
 - EvoPilot does not train or modify model weights.
 
 ## License

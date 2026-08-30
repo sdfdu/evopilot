@@ -2,67 +2,60 @@
 
 ## One-line pitch
 
-EvoPilot is a local-first Codex copilot that learns proven work habits and promotes them into safe, reusable Skills and MCP extensions.
+EvoPilot is a local-first workflow compiler that turns repeated successful agent work into evidence-backed, portable Agent Skills.
 
 ## Show HN
 
 ### Title
 
-Show HN: EvoPilot – a local-first Codex copilot that improves with use
+Show HN: EvoPilot — compile repeated AI-agent workflows into portable Skills
 
 ### Post
 
-I built EvoPilot because most assistants either forget how you work or hide adaptation behind an opaque memory feature.
+I built EvoPilot because useful agent workflows usually disappear into chat history and prompt fragments.
 
-EvoPilot records privacy-minimized workflow signals, detects repeated patterns, and promotes successful workflows into versioned Codex Skills. When a workflow genuinely needs live data or external actions, it can draft an MCP integration—but enabling new permissions stays human-approved.
+EvoPilot records privacy-minimized outcomes, finds sequences that repeatedly work, and compiles qualified workflows into a portable Open Agent Skills bundle. Each bundle contains the workflow plus machine-readable provenance, evidence counts, success rate, and review status.
 
-The core is dependency-free Python and SQLite. It does not train model weights, store raw tool inputs/outputs, or learn permission grants from repetition. Unknown and dangerous actions fail closed.
+It is intentionally not unrestricted self-modification. Generated Skills remain uninstalled until a person reviews them. Risky and externally consequential actions fail closed behind exact, short-lived, one-time approvals.
 
-The first release includes six Skills, local memory, Codex lifecycle hooks, a stdio MCP server, tests, export/deletion tools, and an explicit promotion/rollback model.
+The runtime is dependency-free Python and SQLite. The repository includes a deterministic 60-second demo, local diagnostics, six Codex Skills, lifecycle hooks, a 16-tool MCP server, and tests.
 
 Repository: https://github.com/sdfdu/evopilot
 
-I would especially appreciate feedback on workflow evaluation metrics and safe extension promotion.
+I would especially value feedback on portable workflow evidence and cross-agent Skill compatibility.
 
 ## X / Bluesky
 
-I built EvoPilot: a local-first Codex copilot that gets better at *your* work.
+I built EvoPilot: a local-first workflow compiler for AI agents.
 
-It learns repeated workflow patterns, promotes what works into versioned Skills, drafts MCP integrations when needed, and keeps dangerous actions human-approved.
+It detects repeated successful work and compiles it into a portable Agent Skill with evidence and provenance. No model-weight training, no raw tool logs, and no silent permission growth.
 
-No cloud account. No raw tool logs. MIT licensed.
-
-https://github.com/sdfdu/evopilot
+60-second demo: https://github.com/sdfdu/evopilot
 
 ## Reddit
 
 ### Title
 
-I built a local-first Codex agent that turns repeated work habits into Skills
+I built an open-source workflow compiler that turns repeated AI-agent work into portable Skills
 
 ### Body
 
-EvoPilot is an experiment in making agent adaptation inspectable instead of magical. It stores structured local memories with confidence and evidence counts, observes tool categories and outcomes without retaining raw commands, and detects repeated workflows.
+EvoPilot makes agent adaptation inspectable. It observes privacy-minimized tool categories and outcomes, detects repeated workflows, and compiles qualified sequences into `SKILL.md` plus a machine-readable evidence file.
 
-Stable workflows can be promoted into Codex Skills. MCP integrations are drafted only when external data or controlled actions are actually needed, and enabling new permissions requires human approval.
+The generated Skill is never installed automatically. Dangerous or external actions still require a human. The project is local-first, dependency-free Python with SQLite, and includes a deterministic demo so you can inspect the full loop without donating any real usage data.
 
-The v0.1 release is dependency-free Python with SQLite, six focused Skills, hooks, a stdio MCP server, tests, and JSON export/deletion tools.
-
-I would love feedback on the promotion thresholds and on which app-specific pack should come first.
+I would love feedback on the evidence thresholds and which cross-agent compatibility test should come first.
 
 https://github.com/sdfdu/evopilot
 
 ## LinkedIn
 
-I have released EvoPilot, an open-source, local-first adaptive copilot for Codex.
+I released EvoPilot, an open-source workflow compiler for AI agents.
 
-Instead of unrestricted “self-improvement,” EvoPilot uses a controlled learning loop: observe privacy-minimized workflow signals, detect repeated patterns, trial a workflow, measure outcomes, promote successful behavior into a versioned Skill, and roll back when it performs worse.
+Instead of leaving successful routines inside chat history, EvoPilot detects repeated workflows and turns them into portable, reviewable Agent Skills. Each bundle carries its evidence and provenance, while dangerous actions and new permissions stay human-approved.
 
-External integrations and dangerous actions remain behind human approval. The first release includes six Skills, SQLite memory, Codex hooks, an MCP server, tests, and portable exports.
-
-Project: https://github.com/sdfdu/evopilot
+Project and 60-second demo: https://github.com/sdfdu/evopilot
 
 ## Suggested GitHub topics
 
-`ai-agent`, `codex`, `mcp`, `model-context-protocol`, `agent-memory`, `adaptive-agent`, `developer-tools`, `productivity`, `python`, `sqlite`
-
+`ai-agent`, `agent-skills`, `open-agent-skills`, `codex`, `mcp`, `workflow-automation`, `agent-memory`, `developer-tools`, `python`, `sqlite`

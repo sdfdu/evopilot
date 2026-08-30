@@ -1,7 +1,7 @@
 {
   "name": "evopilot",
-  "version": "0.2.0",
-  "description": "A local-first Codex copilot that learns proven work habits and promotes them into safe, reusable extensions.",
+  "version": "0.3.0",
+  "description": "A local-first workflow compiler that turns repeated successful work into evidence-backed, portable Agent Skills.",
   "author": {
     "name": "duke"
   },
@@ -10,6 +10,7 @@
   "repository": "https://github.com/sdfdu/evopilot.git",
   "keywords": [
     "adaptive-agent",
+    "workflow-compiler",
     "memory",
     "skills",
     "mcp",
@@ -17,9 +18,9 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Evopilot",
-    "shortDescription": "A Codex copilot that improves with use.",
-    "longDescription": "EvoPilot learns evidence-backed preferences and multi-step workflows, preserves corrections and conflicts, drafts successful workflows into reviewable Skills, and blocks risky actions until a person grants an exact one-time approval.",
+    "displayName": "EvoPilot",
+    "shortDescription": "Turn repeated work into reusable Agent Skills.",
+    "longDescription": "EvoPilot measures privacy-minimized work outcomes, detects repeated successful workflows, and compiles them into portable Open Agent Skills bundles with provenance and evidence. Generated Skills remain uninstalled until human review, while risky actions require an exact one-time approval.",
     "developerName": "duke",
     "category": "Productivity",
     "capabilities": [
@@ -28,9 +29,9 @@
     ],
     "brandColor": "#6D5DFB",
     "defaultPrompt": [
-      "Initialize EvoPilot with my preferences: discuss before building, recommend a default, act autonomously on local recoverable work, and ask immediately before dangerous or external actions.",
-      "Use EvoPilot to help me develop this idea before building it.",
-      "Show what EvoPilot has learned and generate my weekly learning report."
+      "Run the EvoPilot 60-second workflow compiler demo.",
+      "Show which repeated workflows are ready to become Skills.",
+      "Compile my strongest proven workflow into a portable Skill bundle."
     ]
   },
   "mcpServers": "./.mcp.json"
