@@ -11,7 +11,7 @@ Evolve capability through promotion, testing, and rollback rather than uncontrol
 2. At three observations, describe a candidate workflow. At five with at least three successful outcomes, it becomes `draft_ready`. At eight with at least three successes, consider it stable.
 3. Prefer a Skill when existing tools are sufficient. Add a deterministic script for repeatable mechanics.
 4. Draft an MCP server only when live data, authentication, controlled external actions, or a missing tool genuinely requires one.
-5. Use `evopilot_compile_skill` only for a `draft_ready` or `stable` fingerprint. Review both `SKILL.md` and `evopilot.json`, keep the bundle uninstalled, version it, and test it in an isolated workspace.
+5. Use `evopilot_compile_skill` only for a `draft_ready` or `stable` fingerprint, then run `evopilot_validate_skill`. Review both `SKILL.md` and `evopilot.json`, keep the bundle uninstalled, version it, and test it in an isolated workspace. Treat structural validation as a pre-review check, not proof that the workflow executes correctly.
 6. Compare success rate, retries, corrections, time, and user acceptance against the previous workflow.
 7. Never automatically activate generated Skills. Require human review after validation, and require human approval before installing or enabling MCP, adding credentials, expanding access, or publishing.
 8. Roll back when the new workflow performs worse or routes unrelated requests.

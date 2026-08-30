@@ -12,10 +12,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from core import (  # noqa: E402
     analyze_habits, analyze_sequences, authorize_once, context, correct_memory,
     compile_skill, demo, doctor, draft_skill, export_data, forget, memory_history,
-    observe, remember, review_action, weekly_report,
+    observe, remember, review_action, validate_skill_bundle, weekly_report,
 )
 
-SERVER_VERSION = "0.3.0"
+SERVER_VERSION = "0.3.1"
 FALLBACK_PROTOCOL_VERSION = "2025-06-18"
 
 TOOLS = [
@@ -31,6 +31,7 @@ TOOLS = [
     {"name": "evopilot_compile_skill", "description": "Compile an evidence-backed workflow into a portable Open Agent Skills bundle. It is never installed automatically.", "inputSchema": {"type": "object", "properties": {"fingerprint": {"type": "string"}, "destination": {"type": "string"}}, "required": ["fingerprint", "destination"]}},
     {"name": "evopilot_demo", "description": "Show a deterministic simulated workflow-compiler demo without changing learned user data; optionally write a review-only bundle.", "inputSchema": {"type": "object", "properties": {"destination": {"type": "string"}}}},
     {"name": "evopilot_doctor", "description": "Check the local runtime, required plugin files, and database health without returning stored memory content.", "inputSchema": {"type": "object", "properties": {"plugin_root": {"type": "string"}}}},
+    {"name": "evopilot_validate_skill", "description": "Structurally validate and score a compiled Skill bundle without executing or installing it.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}}, "required": ["bundle"]}},
     {"name": "evopilot_weekly_report", "description": "Produce a concise evidence-based learning report for the last 1-90 days.", "inputSchema": {"type": "object", "properties": {"days": {"type": "integer", "minimum": 1, "maximum": 90}}}},
     {"name": "evopilot_review_action", "description": "Classify a proposed action. Unknown or dangerous actions require a person.", "inputSchema": {"type": "object", "properties": {"action": {"type": "string"}, "details": {"type": "string"}}, "required": ["action"]}},
     {"name": "evopilot_authorize_once", "description": "After explicit human confirmation, authorize the exact action ID blocked by the safety gate for one use within ten minutes.", "inputSchema": {"type": "object", "properties": {"approval_id": {"type": "string", "pattern": "^[0-9a-f]{24}$"}, "label": {"type": "string"}}, "required": ["approval_id"]}},
@@ -68,6 +69,8 @@ def call(name, args):
         return content(demo(Path(args["destination"]) if args.get("destination") else None))
     if name == "evopilot_doctor":
         return content(doctor(Path(args["plugin_root"]) if args.get("plugin_root") else None))
+    if name == "evopilot_validate_skill":
+        return content(validate_skill_bundle(Path(args["bundle"])))
     if name == "evopilot_weekly_report":
         return content(weekly_report(int(args.get("days", 7))))
     if name == "evopilot_review_action":

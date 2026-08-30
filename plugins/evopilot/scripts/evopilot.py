@@ -9,7 +9,7 @@ from pathlib import Path
 from core import (
     analyze_habits, analyze_sequences, authorize_once, context, correct_memory,
     compile_skill, demo, doctor, draft_skill, export_data, forget, memory_history,
-    observe, remember, review_action, weekly_report,
+    observe, remember, review_action, validate_skill_bundle, weekly_report,
 )
 
 
@@ -59,6 +59,8 @@ def main() -> int:
     item.add_argument("--destination", type=Path)
     item = sub.add_parser("doctor")
     item.add_argument("--plugin-root", type=Path)
+    item = sub.add_parser("validate-skill")
+    item.add_argument("bundle", type=Path)
     item = sub.add_parser("report")
     item.add_argument("--days", type=int, default=7)
     item = sub.add_parser("export")
@@ -94,6 +96,8 @@ def main() -> int:
         result = demo(args.destination)
     elif args.command == "doctor":
         result = doctor(args.plugin_root)
+    elif args.command == "validate-skill":
+        result = validate_skill_bundle(args.bundle)
     elif args.command == "report":
         print(weekly_report(args.days))
         return 0

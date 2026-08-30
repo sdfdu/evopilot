@@ -28,7 +28,7 @@ DANGEROUS = {
 }
 LOW_RISK = {
     "read", "search", "summarize", "plan", "write_workspace", "edit_workspace",
-    "run_tests", "run_build", "analyze", "draft_skill", "draft_mcp", "export_backup",
+    "run_tests", "run_build", "analyze", "draft_skill", "compile_skill", "validate_skill", "draft_mcp", "export_backup",
 }
 MEMORY_SOURCES = {"explicit", "inferred"}
 ACTIVE_MEMORY = "active"
@@ -423,6 +423,105 @@ def _skill_name(pattern: str) -> str:
     return name or "evopilot-workflow"
 
 
+def validate_skill_bundle(bundle: Path) -> dict[str, Any]:
+    """Structurally validate and score a compiled Skill bundle without executing it."""
+    bundle = Path(bundle).resolve()
+    skill_file = bundle / "SKILL.md"
+    evidence_file = bundle / "evopilot.json"
+    checks: list[dict[str, Any]] = []
+
+    def add(name: str, weight: int, passed: bool, detail: str) -> None:
+        checks.append({"name": name, "weight": weight, "passed": bool(passed), "detail": detail})
+
+    files_ok = bundle.is_dir() and skill_file.is_file() and evidence_file.is_file()
+    add("required_files", 10, files_ok, "SKILL.md and evopilot.json are present" if files_ok else "bundle must contain SKILL.md and evopilot.json")
+
+    skill_text = skill_file.read_text(encoding="utf-8") if skill_file.is_file() else ""
+    frontmatter: dict[str, str] = {}
+    if skill_text.startswith("---\n"):
+        closing = skill_text.find("\n---\n", 4)
+        if closing != -1:
+            for line in skill_text[4:closing].splitlines():
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    frontmatter[key.strip()] = value.strip()
+    name = frontmatter.get("name", "")
+    description = frontmatter.get("description", "")
+    frontmatter_ok = bool(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", name)) and 1 <= len(description) <= 1024
+    add("frontmatter", 10, frontmatter_ok, "valid name and description" if frontmatter_ok else "frontmatter needs a valid lowercase name and non-empty description")
+    name_ok = bool(name) and name == bundle.name
+    add("name_matches_directory", 5, name_ok, "Skill name matches its directory" if name_ok else "frontmatter name must match the bundle directory")
+
+    manifest: dict[str, Any] = {}
+    manifest_error = ""
+    if evidence_file.is_file():
+        try:
+            loaded = json.loads(evidence_file.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                manifest = loaded
+            else:
+                manifest_error = "manifest root must be an object"
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            manifest_error = f"{type(exc).__name__}: {exc}"
+    else:
+        manifest_error = "evopilot.json is missing"
+    generator = manifest.get("generator", {}) if isinstance(manifest.get("generator"), dict) else {}
+    manifest_ok = bool(manifest) and manifest.get("schema_version") == 1 and generator.get("name") == "EvoPilot"
+    add("manifest", 10, manifest_ok, "recognized EvoPilot evidence manifest" if manifest_ok else manifest_error or "unrecognized evidence manifest")
+
+    workflow = manifest.get("workflow", {}) if isinstance(manifest.get("workflow"), dict) else {}
+    steps = workflow.get("steps", [])
+    workflow_ok = isinstance(steps, list) and len(steps) >= 2 and all(isinstance(step, str) and step.strip() for step in steps)
+    add("workflow", 10, workflow_ok, f"{len(steps)} ordered steps" if workflow_ok else "workflow needs at least two non-empty ordered steps")
+
+    evidence = manifest.get("evidence", {}) if isinstance(manifest.get("evidence"), dict) else {}
+    observations = evidence.get("observations")
+    successes = evidence.get("successful_outcomes")
+    success_rate = evidence.get("success_rate")
+    numbers_ok = (
+        isinstance(observations, int) and not isinstance(observations, bool)
+        and isinstance(successes, int) and not isinstance(successes, bool)
+        and isinstance(success_rate, (int, float)) and not isinstance(success_rate, bool)
+        and observations >= successes >= 0
+    )
+    expected_rate = successes / observations if numbers_ok and observations else 0.0
+    evidence_ok = numbers_ok and abs(float(success_rate) - expected_rate) <= 0.001
+    add("evidence_consistency", 10, evidence_ok, "counts and success rate agree" if evidence_ok else "observation count, success count, and success rate are inconsistent")
+
+    status = workflow.get("status")
+    threshold_ok = evidence_ok and (
+        (status == "draft_ready" and observations >= 5 and successes >= 3)
+        or (status == "stable" and observations >= 8 and successes >= 3)
+    )
+    add("promotion_threshold", 15, threshold_ok, f"{status} threshold is satisfied" if threshold_ok else "workflow does not satisfy its declared promotion threshold")
+
+    normalized_skill = skill_text.casefold()
+    safety_ok = all(fragment in normalized_skill for fragment in ("explicit user instructions", "human approval", "stop and ask"))
+    add("safety_boundaries", 15, safety_ok, "instruction priority, approval, and stop conditions are present" if safety_ok else "Skill is missing one or more required safety boundaries")
+
+    review = manifest.get("review", {}) if isinstance(manifest.get("review"), dict) else {}
+    review_ok = review.get("state") == "pending_human_review" and review.get("installed") is False
+    add("human_review", 10, review_ok, "bundle remains uninstalled and pending review" if review_ok else "bundle must remain uninstalled and pending human review")
+    portability_ok = manifest.get("format") == "open-agent-skills" and manifest.get("portable") is True
+    add("portability", 5, portability_ok, "Open Agent Skills format declared" if portability_ok else "portable Open Agent Skills format is not declared")
+
+    score = sum(item["weight"] for item in checks if item["passed"])
+    valid = all(item["passed"] for item in checks)
+    simulated = manifest.get("simulated") is True
+    recommendation = "demo_only" if simulated and valid else "ready_for_human_review" if valid else "needs_revision"
+    return {
+        "valid": valid,
+        "score": score,
+        "recommendation": recommendation,
+        "simulated": simulated,
+        "checks": checks,
+        "limitations": [
+            "Structural validation does not execute the workflow.",
+            "A passing score does not prove compatibility with every agent client.",
+        ],
+    }
+
+
 def _write_skill_bundle(
     *,
     fingerprint: str,
@@ -476,7 +575,7 @@ This is an EvoPilot-generated portable Skill bundle. A person must review and va
     evidence = {
         "schema_version": 1,
         "generated_at": utc_now(),
-        "generator": {"name": "EvoPilot", "version": "0.3.0"},
+        "generator": {"name": "EvoPilot", "version": "0.3.1"},
         "format": "open-agent-skills",
         "portable": True,
         "simulated": simulated,
@@ -495,7 +594,7 @@ This is an EvoPilot-generated portable Skill bundle. A person must review and va
     }
     skill_file.write_text(body, encoding="utf-8")
     evidence_file.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
-    return {
+    result = {
         "path": str(skill_file),
         "bundle": str(skill_dir),
         "evidence_path": str(evidence_file),
@@ -506,6 +605,8 @@ This is an EvoPilot-generated portable Skill bundle. A person must review and va
         "requires_human_review": True,
         "simulated": simulated,
     }
+    result["validation"] = validate_skill_bundle(skill_dir)
+    return result
 
 
 def compile_skill(fingerprint: str, destination: Path) -> dict[str, Any]:
@@ -542,7 +643,7 @@ def demo(destination: Path | None = None) -> dict[str, Any]:
         "headline": "Repeated work becomes a reviewable, portable Agent Skill.",
         "workflow": {"fingerprint": fingerprint, "steps": steps, "status": "draft_ready"},
         "evidence": {"observations": 5, "successful_outcomes": 4, "success_rate": 0.8},
-        "stages": ["observe outcomes", "detect a repeated sequence", "compile a Skill bundle", "human review before installation"],
+        "stages": ["observe outcomes", "detect a repeated sequence", "compile a Skill bundle", "validate structure and evidence", "human review before installation"],
         "user_data_changed": False,
     }
     if destination is not None:
@@ -583,7 +684,7 @@ def doctor(plugin_root: Path | None = None) -> dict[str, Any]:
     ok = all(item["status"] == "ok" for item in checks)
     return {
         "ok": ok,
-        "version": "0.3.0",
+        "version": "0.3.1",
         "checks": checks,
         "next_step": "Run `evopilot demo --destination <folder>` to see the workflow compiler." if ok else "Fix the failing checks, then run doctor again.",
     }

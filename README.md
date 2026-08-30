@@ -29,12 +29,20 @@ The demo is clearly marked as simulated and never enters your learned history. I
 
 ```text
 evopilot-demo/
-└── workspace-inspect-workspace-apply-patch-terminal-test/
+└── workspace-inspect-workspace-apply-patch-terminal/
     ├── SKILL.md       # portable workflow instructions
     └── evopilot.json  # provenance, evidence, status, and review state
 ```
 
 Open those two files to see the whole product loop: observe outcomes, detect repetition, compile a portable Skill, and require human review before installation.
+
+Then validate any compiled bundle before reviewing it:
+
+```bash
+python plugins/evopilot/scripts/evopilot.py validate-skill ./evopilot-demo/workspace-inspect-workspace-apply-patch-terminal
+```
+
+The demo receives `demo_only` even when structurally valid, so simulated evidence can never be mistaken for a production-ready workflow.
 
 ## Why it is useful
 
@@ -78,7 +86,8 @@ Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure
 - A deterministic demo that cannot contaminate real learning data.
 - `doctor` diagnostics for Python, plugin files, and database health.
 - Weekly evidence reports covering outcomes, failures, corrections, conflicts, and promotion candidates.
-- A dependency-free MCP server exposing 16 memory, learning, compilation, diagnostics, export, and approval tools.
+- Deterministic bundle validation with a 0–100 quality score and explicit limitations.
+- A dependency-free MCP server exposing 17 memory, learning, compilation, validation, diagnostics, export, and approval tools.
 - Six focused Skills for ideation, development, tool operation, coaching, monitoring, and extension creation.
 
 ## Evidence thresholds
@@ -92,6 +101,8 @@ EvoPilot does not promote a sequence after one lucky run.
 | Stable | At least 8 observations and 3 successful outcomes |
 
 Compilation is allowed only for `draft_ready` or `stable` workflows. The result remains uninstalled with `pending_human_review` recorded in its evidence file.
+
+Before recommending review, the validator checks required files, frontmatter, directory naming, provenance, workflow shape, evidence arithmetic, promotion thresholds, safety boundaries, review state, and portable format. This is structural validation: it does not execute the workflow or claim compatibility with every agent client.
 
 ## Safety model
 
@@ -119,6 +130,7 @@ python plugins/evopilot/scripts/evopilot.py demo
 python plugins/evopilot/scripts/evopilot.py context
 python plugins/evopilot/scripts/evopilot.py sequences
 python plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> <destination>
+python plugins/evopilot/scripts/evopilot.py validate-skill <bundle-directory>
 python plugins/evopilot/scripts/evopilot.py report --days 7
 ```
 

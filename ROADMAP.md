@@ -4,7 +4,8 @@
 
 - Portable Skill bundles with provenance and measured evidence. ✅
 - A deterministic first-run demo and local health diagnostics. ✅
-- Skill validation, isolated replay tests, and review UX.
+- Structural Skill validation and transparent quality scoring. ✅
+- Isolated replay tests and review UX.
 - Before/after metrics when measured duration and retry data exist.
 
 ## 0.4 — Cross-agent portability

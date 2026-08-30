@@ -1,6 +1,6 @@
 {
   "name": "evopilot",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A local-first workflow compiler that turns repeated successful work into evidence-backed, portable Agent Skills.",
   "author": {
     "name": "duke"
@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "EvoPilot",
     "shortDescription": "Turn repeated work into reusable Agent Skills.",
-    "longDescription": "EvoPilot measures privacy-minimized work outcomes, detects repeated successful workflows, and compiles them into portable Open Agent Skills bundles with provenance and evidence. Generated Skills remain uninstalled until human review, while risky actions require an exact one-time approval.",
+    "longDescription": "EvoPilot measures privacy-minimized work outcomes, detects repeated successful workflows, and compiles them into portable Open Agent Skills bundles with provenance and evidence. Deterministic validation checks structure, evidence, thresholds, and safety before human review, while risky actions require an exact one-time approval.",
     "developerName": "duke",
     "category": "Productivity",
     "capabilities": [
@@ -31,7 +31,7 @@
     "defaultPrompt": [
       "Run the EvoPilot 60-second workflow compiler demo.",
       "Show which repeated workflows are ready to become Skills.",
-      "Compile my strongest proven workflow into a portable Skill bundle."
+      "Compile and validate my strongest proven workflow as a portable Skill bundle."
     ]
   },
   "mcpServers": "./.mcp.json"

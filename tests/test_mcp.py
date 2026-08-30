@@ -10,17 +10,18 @@ class McpTests(unittest.TestCase):
    result=subprocess.run([sys.executable,str(ROOT/"plugins"/"evopilot"/"mcp"/"server.py")],input=requests,text=True,capture_output=True,env=env,check=True)
    lines=[json.loads(x) for x in result.stdout.splitlines()]
    self.assertEqual(lines[0]["result"]["serverInfo"]["name"],"evopilot")
-   self.assertEqual(lines[0]["result"]["serverInfo"]["version"],"0.3.0")
+   self.assertEqual(lines[0]["result"]["serverInfo"]["version"],"0.3.1")
    self.assertEqual(lines[0]["result"]["protocolVersion"],"2026-07-28")
    self.assertIn("tools",lines[0]["result"]["capabilities"])
    names={tool["name"] for tool in lines[1]["result"]["tools"]}
-   self.assertEqual(len(names),16)
+   self.assertEqual(len(names),17)
    self.assertIn("evopilot_analyze_sequences",names)
    self.assertIn("evopilot_weekly_report",names)
    self.assertIn("evopilot_authorize_once",names)
    self.assertIn("evopilot_compile_skill",names)
    self.assertIn("evopilot_demo",names)
    self.assertIn("evopilot_doctor",names)
+   self.assertIn("evopilot_validate_skill",names)
 
  def test_installed_plugin_path_with_spaces_and_unicode(self):
   with tempfile.TemporaryDirectory() as temp:
@@ -31,7 +32,7 @@ class McpTests(unittest.TestCase):
    result=subprocess.run([sys.executable,str(installed/"mcp"/"server.py")],input=requests,text=True,capture_output=True,env=env,check=True)
    lines=[json.loads(x) for x in result.stdout.splitlines()]
    self.assertEqual(lines[0]["result"]["protocolVersion"],"2025-11-25")
-   self.assertEqual(len(lines[1]["result"]["tools"]),16)
+   self.assertEqual(len(lines[1]["result"]["tools"]),17)
    self.assertEqual(result.stderr,"")
 
 if __name__=="__main__":unittest.main()

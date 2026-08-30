@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 import sys
 sys.path.insert(0,str(ROOT/"plugins"/"evopilot"/"scripts"))
-from core import analyze_habits, analyze_sequences, compile_skill, connect, context, demo, doctor, draft_skill, forget, memories, memory_history, observe, remember, review_action, weekly_report
+from core import analyze_habits, analyze_sequences, compile_skill, connect, context, demo, doctor, draft_skill, forget, memories, memory_history, observe, remember, review_action, validate_skill_bundle, weekly_report
 
 class EvoPilotTests(unittest.TestCase):
  def setUp(self):
@@ -57,6 +57,9 @@ class EvoPilotTests(unittest.TestCase):
    evidence=Path(result["evidence_path"]).read_text(encoding="utf-8")
    self.assertFalse(result["installed"])
    self.assertEqual(result["format"],"open-agent-skills")
+   self.assertTrue(result["validation"]["valid"])
+   self.assertEqual(result["validation"]["score"],100)
+   self.assertEqual(result["validation"]["recommendation"],"ready_for_human_review")
    self.assertIn("human approval",text)
    self.assertIn('"observations": 5',evidence)
 
@@ -76,6 +79,19 @@ class EvoPilotTests(unittest.TestCase):
   self.assertEqual(before,after)
   diagnosis=doctor(ROOT/"plugins"/"evopilot")
   self.assertTrue(diagnosis["ok"])
+
+ def test_bundle_validation_rejects_tampered_evidence(self):
+  with tempfile.TemporaryDirectory() as output:
+   artifact=demo(Path(output))["artifact"]
+   bundle=Path(artifact["bundle"])
+   self.assertEqual(validate_skill_bundle(bundle)["recommendation"],"demo_only")
+   evidence_path=bundle/"evopilot.json"
+   evidence=evidence_path.read_text(encoding="utf-8").replace('"successful_outcomes": 4','"successful_outcomes": 9')
+   evidence_path.write_text(evidence,encoding="utf-8")
+   validation=validate_skill_bundle(bundle)
+   self.assertFalse(validation["valid"])
+   self.assertLess(validation["score"],100)
+   self.assertEqual(validation["recommendation"],"needs_revision")
 
  def test_skill_draft_rejects_weak_evidence(self):
   for index in range(3):

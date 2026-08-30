@@ -61,7 +61,14 @@ STORY = [
         ],
     ),
     (
-        "5. Human review stays in control",
+        "5. Validate before review",
+        [
+            ("evopilot", "Quality score: 100 / 100  |  all structural checks passed"),
+            ("policy", "Does not execute the workflow or promise universal compatibility"),
+        ],
+    ),
+    (
+        "6. Human review stays in control",
         [
             ("policy", "Generated Skill is NOT installed automatically"),
             ("policy", "New permissions, publishing, and destructive actions require approval"),

@@ -1,4 +1,14 @@
-# EvoPilot v0.3.0 (local candidate)
+# EvoPilot v0.3.1 (local candidate)
+
+## Highlights
+
+- Add deterministic validation and a transparent 0–100 quality score for compiled Skill bundles.
+- Detect malformed frontmatter, inconsistent evidence, false promotion claims, missing safety boundaries, and unsafe review state.
+- Keep simulated bundles in `demo_only` status even when they pass structural validation.
+- Expose validation through `validate-skill` and `evopilot_validate_skill`, expanding the MCP surface from 16 to 17 tools.
+- State validation limits explicitly: it does not execute workflows or prove universal client compatibility.
+
+# EvoPilot v0.3.0
 
 ## Highlights
 
