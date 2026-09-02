@@ -83,6 +83,14 @@ codex plugin add evopilot@evopilot
 
 Fully restart Codex and start a new task so its Skills, hooks, and MCP tools load from the installed version. EvoPilot's SessionStart hook injects default guidance automatically in new tasks, so the agent can apply relevant EvoPilot Skills and MCP tools when the task matches.
 
+To make EvoPilot the default workflow layer for future Codex tasks, run:
+
+```bash
+./scripts/install-codex-defaults.sh
+```
+
+The installer enables the plugin when possible and updates the EvoPilot-managed block in `~/.codex/AGENTS.md` without overwriting unrelated user settings. See [docs/codex-defaults.md](docs/codex-defaults.md) for details.
+
 To see the product loop, ask:
 
 ```text
