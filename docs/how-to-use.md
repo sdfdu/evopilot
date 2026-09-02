@@ -10,7 +10,8 @@ codex plugin add evopilot@evopilot
 ```
 
 2. Fully restart Codex.
-3. Start a new task and paste:
+3. Start a new task. EvoPilot injects default guidance automatically at task start.
+4. To see the product loop, paste:
 
 ```text
 Run the EvoPilot 60-second workflow compiler demo.
@@ -20,7 +21,7 @@ The demo is simulated. It shows the full loop without writing to learned user hi
 
 ## Real work
 
-Start a fresh task with:
+After restart, EvoPilot is active by default in new tasks. For maximum clarity, start a fresh task with:
 
 ```text
 Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure repeated workflow outcomes, and show me which workflow is ready to become a portable Skill. Ask before dangerous or external actions.

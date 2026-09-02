@@ -16,7 +16,7 @@ from core import (  # noqa: E402
     validate_skill_bundle, weekly_report,
 )
 
-SERVER_VERSION = "0.3.2"
+SERVER_VERSION = "0.3.3"
 FALLBACK_PROTOCOL_VERSION = "2025-06-18"
 
 TOOLS = [

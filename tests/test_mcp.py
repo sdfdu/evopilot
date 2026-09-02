@@ -10,7 +10,7 @@ class McpTests(unittest.TestCase):
    result=subprocess.run([sys.executable,str(ROOT/"plugins"/"evopilot"/"mcp"/"server.py")],input=requests,text=True,capture_output=True,env=env,check=True)
    lines=[json.loads(x) for x in result.stdout.splitlines()]
    self.assertEqual(lines[0]["result"]["serverInfo"]["name"],"evopilot")
-   self.assertEqual(lines[0]["result"]["serverInfo"]["version"],"0.3.2")
+   self.assertEqual(lines[0]["result"]["serverInfo"]["version"],"0.3.3")
    self.assertEqual(lines[0]["result"]["protocolVersion"],"2026-07-28")
    self.assertIn("tools",lines[0]["result"]["capabilities"])
    names={tool["name"] for tool in lines[1]["result"]["tools"]}

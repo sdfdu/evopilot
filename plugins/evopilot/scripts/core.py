@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.3.2"
+VERSION = "0.3.3"
 SCHEMA_VERSION = 2
 SENSITIVE = re.compile(
     r"(api[_ -]?key|access[_ -]?token|refresh[_ -]?token|token|password|passcode|"
@@ -391,6 +391,19 @@ def context(scope: str = "global") -> str:
     return "\n".join(lines)
 
 
+def startup_context(scope: str = "global") -> str:
+    """Return the default context injected when the plugin is installed."""
+    guidance = [
+        "EvoPilot is installed and active for this task.",
+        "- Apply relevant EvoPilot Skills automatically when the task matches their descriptions.",
+        "- Use EvoPilot MCP tools when available to load context, record privacy-minimized outcomes, inspect repeated workflows, and validate generated Skill bundles.",
+        "- Keep explicit user instructions above learned behavior.",
+        "- Never store secrets, raw prompts, raw tool inputs, raw tool outputs, or private file paths as behavioral memory.",
+        "- Before publish, delete, credential, permission, system-setting, payment, or unknown actions, require human approval at the execution boundary.",
+    ]
+    return "\n".join(guidance + ["", context(scope)])
+
+
 def weekly_report(days: int = 7) -> str:
     days = max(1, min(90, days))
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat(timespec="seconds")
@@ -434,14 +447,14 @@ def quickstart() -> str:
     return """# EvoPilot quickstart
 
 1. Fully restart Codex so the installed plugin can load.
-2. Start a new Codex task.
-3. Paste this:
+2. Start a new Codex task. EvoPilot now injects its default guidance automatically at task start.
+3. To see the product loop, paste this:
 
 ```text
 Run the EvoPilot 60-second workflow compiler demo.
 ```
 
-For real work, start a new task with:
+For real work, you can simply work normally. For maximum clarity, start a new task with:
 
 ```text
 Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure repeated workflow outcomes, and show me which workflow is ready to become a portable Skill. Ask before dangerous or external actions.

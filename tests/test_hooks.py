@@ -32,6 +32,8 @@ class HookTests(unittest.TestCase):
             )
             payload = json.loads(result.stdout)
             context = payload["hookSpecificOutput"]["additionalContext"]
+            self.assertIn("EvoPilot is installed and active for this task.", context)
+            self.assertIn("Apply relevant EvoPilot Skills automatically", context)
             self.assertIn("No learned preferences yet", context)
             self.assertEqual(result.stderr, "")
 

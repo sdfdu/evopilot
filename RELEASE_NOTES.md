@@ -1,3 +1,11 @@
+# EvoPilot v0.3.3 (local candidate)
+
+## Changed
+
+- Make the SessionStart hook inject default EvoPilot operating guidance in every new task after plugin installation and Codex restart.
+- Clarify that relevant EvoPilot Skills and MCP tools should be applied automatically when a task matches, while explicit user instructions and safety approvals still take priority.
+- Update README and how-to-use documentation to distinguish automatic startup guidance from optional explicit prompts.
+
 # EvoPilot v0.3.2 (local candidate)
 
 ## Added

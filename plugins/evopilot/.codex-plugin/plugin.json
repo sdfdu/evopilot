@@ -1,6 +1,6 @@
 {
   "name": "evopilot",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "A local-first workflow compiler that turns repeated successful work into evidence-backed, portable Agent Skills.",
   "author": {
     "name": "duke"
@@ -30,7 +30,7 @@
     "brandColor": "#6D5DFB",
     "defaultPrompt": [
       "Run the EvoPilot 60-second workflow compiler demo.",
-      "Use EvoPilot while we work.",
+      "Use EvoPilot while we work. EvoPilot is also active by default after restart in new tasks.",
       "Show which repeated workflows are ready to become Skills.",
       "Compile and validate my strongest proven workflow as a portable Skill bundle."
     ]

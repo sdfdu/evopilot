@@ -81,13 +81,15 @@ codex plugin marketplace add sdfdu/evopilot
 codex plugin add evopilot@evopilot
 ```
 
-Fully restart Codex and start a new task so its Skills, hooks, and MCP tools load from the installed version. Then ask:
+Fully restart Codex and start a new task so its Skills, hooks, and MCP tools load from the installed version. EvoPilot's SessionStart hook injects default guidance automatically in new tasks, so the agent can apply relevant EvoPilot Skills and MCP tools when the task matches.
+
+To see the product loop, ask:
 
 ```text
 Run the EvoPilot 60-second workflow compiler demo.
 ```
 
-Or initialize it for real work:
+For extra clarity during real work, ask:
 
 ```text
 Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure repeated workflow outcomes, and show me which workflow is ready to become a portable Skill. Ask before dangerous or external actions.
