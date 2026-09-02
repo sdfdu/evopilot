@@ -5,6 +5,8 @@
 - Portable Skill bundles with provenance and measured evidence. ✅
 - A deterministic first-run demo and local health diagnostics. ✅
 - Structural Skill validation and transparent quality scoring. ✅
+- First-run quickstart and human-readable bundle explainer. ✅
+- Local CI for tests, diagnostics, and demo validation. ✅
 - Isolated replay tests and review UX.
 - Before/after metrics when measured duration and retry data exist.
 

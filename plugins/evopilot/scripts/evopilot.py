@@ -8,8 +8,9 @@ from pathlib import Path
 
 from core import (
     analyze_habits, analyze_sequences, authorize_once, context, correct_memory,
-    compile_skill, demo, doctor, draft_skill, export_data, forget, memory_history,
-    observe, remember, review_action, validate_skill_bundle, weekly_report,
+    compile_skill, demo, doctor, draft_skill, export_data, forget, forget_all,
+    memory_history, observe, quickstart, remember, review_action,
+    validate_skill_bundle, weekly_report,
 )
 
 
@@ -35,9 +36,11 @@ def main() -> int:
     item.add_argument("--key")
     item.add_argument("--limit", type=int, default=50)
     item = sub.add_parser("forget")
-    item.add_argument("key")
+    item.add_argument("key", nargs="?")
+    item.add_argument("--all", action="store_true", help="forget every stored memory while retaining deletion audit events")
     item = sub.add_parser("context")
     item.add_argument("--scope", default="global")
+    sub.add_parser("quickstart")
     item = sub.add_parser("habits")
     item.add_argument("--min-count", type=int, default=3)
     item = sub.add_parser("sequences")
@@ -76,9 +79,17 @@ def main() -> int:
     elif args.command == "history":
         result = memory_history(args.key, args.limit)
     elif args.command == "forget":
-        result = {"forgotten": forget(args.key)}
+        if args.all:
+            result = forget_all()
+        elif args.key:
+            result = {"forgotten": forget(args.key)}
+        else:
+            parser.error("forget requires a key, or use `forget --all`")
     elif args.command == "context":
         print(context(args.scope))
+        return 0
+    elif args.command == "quickstart":
+        print(quickstart())
         return 0
     elif args.command == "habits":
         result = analyze_habits(args.min_count)

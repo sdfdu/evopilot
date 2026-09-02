@@ -18,9 +18,24 @@ EvoPilot watches privacy-minimized outcomes, detects workflows that repeatedly s
 
 Requirements: Python 3.10+.
 
+If you installed EvoPilot as a Codex plugin, fully restart Codex, start a new task, and paste:
+
+```text
+Run the EvoPilot 60-second workflow compiler demo.
+```
+
+For real work, start a new task with:
+
+```text
+Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure repeated workflow outcomes, and show me which workflow is ready to become a portable Skill. Ask before dangerous or external actions.
+```
+
+From a cloned repository, the CLI quickstart prints the same copy-pasteable path:
+
 ```bash
 git clone https://github.com/sdfdu/evopilot.git
 cd evopilot
+python plugins/evopilot/scripts/evopilot.py quickstart
 python plugins/evopilot/scripts/evopilot.py doctor
 python plugins/evopilot/scripts/evopilot.py demo --destination ./evopilot-demo
 ```
@@ -31,10 +46,11 @@ The demo is clearly marked as simulated and never enters your learned history. I
 evopilot-demo/
 └── workspace-inspect-workspace-apply-patch-terminal/
     ├── SKILL.md       # portable workflow instructions
-    └── evopilot.json  # provenance, evidence, status, and review state
+    ├── evopilot.json  # provenance, evidence, status, and review state
+    └── WHAT_HAPPENED.md
 ```
 
-Open those two files to see the whole product loop: observe outcomes, detect repetition, compile a portable Skill, and require human review before installation.
+Open those files to see the whole product loop: observe outcomes, detect repetition, compile a portable Skill, explain the artifact in human language, and require human review before installation.
 
 Then validate any compiled bundle before reviewing it:
 
@@ -77,6 +93,8 @@ Or initialize it for real work:
 Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure repeated workflow outcomes, and show me which workflow is ready to become a portable Skill. Ask before dangerous or external actions.
 ```
 
+See [docs/how-to-use.md](docs/how-to-use.md) for a short operator guide.
+
 ## What ships today
 
 - Local SQLite memory with explicit/inferred sources, conflicts, corrections, history, and confidence decay.
@@ -84,6 +102,7 @@ Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure
 - Transparent two-to-six-step workflow detection with evidence and success thresholds.
 - Portable Skill compilation with `SKILL.md` plus machine-readable `evopilot.json` provenance.
 - A deterministic demo that cannot contaminate real learning data.
+- A `quickstart` command and demo explainer for first-run onboarding.
 - `doctor` diagnostics for Python, plugin files, and database health.
 - Weekly evidence reports covering outcomes, failures, corrections, conflicts, and promotion candidates.
 - Deterministic bundle validation with a 0–100 quality score and explicit limitations.
@@ -126,12 +145,14 @@ EvoPilot complements—not replaces—Codex sandboxing, filesystem boundaries, n
 
 ```bash
 python plugins/evopilot/scripts/evopilot.py doctor
+python plugins/evopilot/scripts/evopilot.py quickstart
 python plugins/evopilot/scripts/evopilot.py demo
 python plugins/evopilot/scripts/evopilot.py context
 python plugins/evopilot/scripts/evopilot.py sequences
 python plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> <destination>
 python plugins/evopilot/scripts/evopilot.py validate-skill <bundle-directory>
 python plugins/evopilot/scripts/evopilot.py report --days 7
+python plugins/evopilot/scripts/evopilot.py forget --all
 ```
 
 The older `draft-skill` command remains as a compatibility alias for `compile-skill`.
@@ -156,7 +177,7 @@ python plugins/evopilot/scripts/evopilot.py doctor --plugin-root plugins/evopilo
 python tools/render_demo.py
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), and [LAUNCH.md](LAUNCH.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), [LAUNCH.md](LAUNCH.md), [docs/privacy.md](docs/privacy.md), and [docs/skill-lifecycle.md](docs/skill-lifecycle.md).
 
 ## Current limits
 

@@ -1,3 +1,20 @@
+# EvoPilot v0.3.2 (local candidate)
+
+## Added
+
+- Add `quickstart` for copy-pasteable first-run guidance in Codex.
+- Add `WHAT_HAPPENED.md` to compiled demo and workflow bundles so reviewers can understand the artifact without reading JSON first.
+- Add `forget --all` and `evopilot_forget_all` for a full memory reset that still keeps deletion audit events.
+- Add `evopilot_quickstart`, expanding the MCP surface from 17 to 19 tools.
+- Add how-to-use, privacy, and Skill lifecycle documentation.
+- Add GitHub Actions CI for unit tests, doctor, demo generation, and demo validation.
+- Add GitHub issue templates for bugs and feature requests.
+
+## Changed
+
+- Make `doctor` point to `quickstart` as the next step after healthy checks.
+- Improve README onboarding for installed Codex plugin users.
+
 # EvoPilot v0.3.1 (local candidate)
 
 ## Highlights

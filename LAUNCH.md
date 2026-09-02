@@ -18,7 +18,7 @@ EvoPilot records privacy-minimized outcomes, finds sequences that repeatedly wor
 
 It is intentionally not unrestricted self-modification. Generated Skills remain uninstalled until a person reviews them. Risky and externally consequential actions fail closed behind exact, short-lived, one-time approvals.
 
-The runtime is dependency-free Python and SQLite. The repository includes a deterministic 60-second demo, local diagnostics, six Codex Skills, lifecycle hooks, a 16-tool MCP server, and tests.
+The runtime is dependency-free Python and SQLite. The repository includes a deterministic 60-second demo, local diagnostics, six Codex Skills, lifecycle hooks, a 19-tool MCP server, and tests.
 
 Repository: https://github.com/sdfdu/evopilot
 

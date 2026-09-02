@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 import sys
 sys.path.insert(0,str(ROOT/"plugins"/"evopilot"/"scripts"))
-from core import analyze_habits, analyze_sequences, compile_skill, connect, context, demo, doctor, draft_skill, forget, memories, memory_history, observe, remember, review_action, validate_skill_bundle, weekly_report
+from core import analyze_habits, analyze_sequences, compile_skill, connect, context, demo, doctor, draft_skill, forget, forget_all, memories, memory_history, observe, quickstart, remember, review_action, validate_skill_bundle, weekly_report
 
 class EvoPilotTests(unittest.TestCase):
  def setUp(self):
@@ -34,6 +34,15 @@ class EvoPilotTests(unittest.TestCase):
  def test_forget_is_explicit(self):
   remember("tone","direct");self.assertTrue(forget("tone"));self.assertFalse(forget("tone"))
   self.assertEqual(memory_history("tone")[0]["event"],"forgotten")
+
+ def test_forget_all_keeps_deletion_audit(self):
+  remember("tone","direct")
+  remember("format","concise")
+  result=forget_all()
+  self.assertEqual(result["forgotten"],2)
+  self.assertEqual(memories(),[])
+  events=memory_history(limit=5)
+  self.assertEqual([event["event"] for event in events[:2]],["forgotten","forgotten"])
 
  def test_inference_cannot_overwrite_explicit_memory(self):
   remember("tone","direct",source="explicit")
@@ -84,6 +93,8 @@ class EvoPilotTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as output:
    artifact=demo(Path(output))["artifact"]
    bundle=Path(artifact["bundle"])
+   self.assertTrue((bundle/"WHAT_HAPPENED.md").is_file())
+   self.assertIn("Installed automatically: no",(bundle/"WHAT_HAPPENED.md").read_text(encoding="utf-8"))
    self.assertEqual(validate_skill_bundle(bundle)["recommendation"],"demo_only")
    evidence_path=bundle/"evopilot.json"
    evidence=evidence_path.read_text(encoding="utf-8").replace('"successful_outcomes": 4','"successful_outcomes": 9')
@@ -107,6 +118,11 @@ class EvoPilotTests(unittest.TestCase):
   report=weekly_report(7)
   self.assertIn("Observations: 2",report)
   self.assertIn("50% successful",report)
+
+ def test_quickstart_is_copy_pasteable(self):
+  guide=quickstart()
+  self.assertIn("Run the EvoPilot 60-second workflow compiler demo.",guide)
+  self.assertIn("forget --all",guide)
 
  def test_v1_database_migrates_without_data_loss(self):
   path=Path(self.temp.name)/"evopilot.sqlite3"

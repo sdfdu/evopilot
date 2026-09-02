@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+VERSION = "0.3.2"
 SCHEMA_VERSION = 2
 SENSITIVE = re.compile(
     r"(api[_ -]?key|access[_ -]?token|refresh[_ -]?token|token|password|passcode|"
@@ -229,6 +230,16 @@ def forget(key: str) -> bool:
         return db.execute("DELETE FROM memories WHERE key=?", (key,)).rowcount > 0
 
 
+def forget_all() -> dict[str, int]:
+    """Delete every stored memory while keeping deletion audit events."""
+    with database() as db:
+        rows = db.execute("SELECT key,value,scope,source FROM memories ORDER BY key").fetchall()
+        for row in rows:
+            _memory_event(db, str(row["key"]), "forgotten", str(row["source"]), str(row["value"]), None, str(row["scope"]))
+        db.execute("DELETE FROM memories")
+    return {"forgotten": len(rows)}
+
+
 def _effective_confidence(row: sqlite3.Row) -> float:
     confidence = float(row["confidence"])
     if row["source"] == "explicit":
@@ -418,6 +429,40 @@ def weekly_report(days: int = 7) -> str:
     return "\n".join(lines)
 
 
+def quickstart() -> str:
+    """Return a copy-pasteable first-run path for Codex users."""
+    return """# EvoPilot quickstart
+
+1. Fully restart Codex so the installed plugin can load.
+2. Start a new Codex task.
+3. Paste this:
+
+```text
+Run the EvoPilot 60-second workflow compiler demo.
+```
+
+For real work, start a new task with:
+
+```text
+Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure repeated workflow outcomes, and show me which workflow is ready to become a portable Skill. Ask before dangerous or external actions.
+```
+
+Useful local checks:
+
+```bash
+python plugins/evopilot/scripts/evopilot.py doctor
+python plugins/evopilot/scripts/evopilot.py report --days 7
+python plugins/evopilot/scripts/evopilot.py sequences
+```
+
+Privacy reset:
+
+```bash
+python plugins/evopilot/scripts/evopilot.py forget --all
+```
+"""
+
+
 def _skill_name(pattern: str) -> str:
     name = re.sub(r"[^a-z0-9]+", "-", pattern.lower()).strip("-")[:48]
     return name or "evopilot-workflow"
@@ -537,6 +582,7 @@ def _write_skill_bundle(
     skill_dir = Path(destination).resolve() / name
     skill_file = skill_dir / "SKILL.md"
     evidence_file = skill_dir / "evopilot.json"
+    explainer_file = skill_dir / "WHAT_HAPPENED.md"
     if skill_dir.exists():
         raise FileExistsError(f"Bundle already exists: {skill_dir}")
     skill_dir.mkdir(parents=True, exist_ok=False)
@@ -575,7 +621,7 @@ This is an EvoPilot-generated portable Skill bundle. A person must review and va
     evidence = {
         "schema_version": 1,
         "generated_at": utc_now(),
-        "generator": {"name": "EvoPilot", "version": "0.3.1"},
+        "generator": {"name": "EvoPilot", "version": VERSION},
         "format": "open-agent-skills",
         "portable": True,
         "simulated": simulated,
@@ -594,10 +640,36 @@ This is an EvoPilot-generated portable Skill bundle. A person must review and va
     }
     skill_file.write_text(body, encoding="utf-8")
     evidence_file.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+    explainer_file.write_text(
+        f"""# What happened
+
+EvoPilot compiled a repeated workflow into a review-only Agent Skill bundle.
+
+- Skill: `{name}`
+- Evidence: {completed} observations, {successful} successful outcomes ({success_rate:.0%} success)
+- Status: `{status}`
+- Simulated demo: {"yes" if simulated else "no"}
+- Installed automatically: no
+
+## Files
+
+- `SKILL.md` contains the portable workflow instructions.
+- `evopilot.json` contains provenance, evidence, workflow status, and review state.
+
+## Review checklist
+
+- Confirm the workflow matches work you actually want repeated.
+- Confirm the safety section says to follow explicit user instructions first.
+- Confirm publish, delete, credential, permission, and external actions still require human approval.
+- Run `evopilot validate-skill {skill_dir}` before installing or sharing the bundle.
+""",
+        encoding="utf-8",
+    )
     result = {
         "path": str(skill_file),
         "bundle": str(skill_dir),
         "evidence_path": str(evidence_file),
+        "explainer_path": str(explainer_file),
         "name": name,
         "status": "compiled",
         "format": "open-agent-skills",
@@ -684,9 +756,9 @@ def doctor(plugin_root: Path | None = None) -> dict[str, Any]:
     ok = all(item["status"] == "ok" for item in checks)
     return {
         "ok": ok,
-        "version": "0.3.1",
+        "version": VERSION,
         "checks": checks,
-        "next_step": "Run `evopilot demo --destination <folder>` to see the workflow compiler." if ok else "Fix the failing checks, then run doctor again.",
+        "next_step": "Run `evopilot quickstart`, then run `evopilot demo --destination ./evopilot-demo`." if ok else "Fix the failing checks, then run doctor again.",
     }
 
 

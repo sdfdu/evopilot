@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest an EvoPilot improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow, review step, or onboarding moment should improve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should EvoPilot do differently?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - onboarding
+        - workflow detection
+        - Skill compilation
+        - validation
+        - privacy or safety
+        - MCP tools
+        - documentation
+    validations:
+      required: true
