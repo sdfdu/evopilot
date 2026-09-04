@@ -13,7 +13,7 @@ Evolve capability through promotion, testing, and rollback rather than uncontrol
 4. Draft an MCP server only when live data, authentication, controlled external actions, or a missing tool genuinely requires one.
 5. Use `evopilot_compile_skill` only for a `draft_ready` or `stable` fingerprint, then run `evopilot_validate_skill`. Review both `SKILL.md` and `evopilot.json`, keep the bundle uninstalled, version it, and test it in an isolated workspace. Treat structural validation as a pre-review check, not proof that the workflow executes correctly.
 6. Compare success rate, retries, corrections, time, and user acceptance against the previous workflow.
-7. Never automatically activate generated Skills. Require human review after validation, and require human approval before installing or enabling MCP, adding credentials, expanding access, or publishing.
+7. When a workflow reaches `draft_ready` or `stable`, proactively explain its evidence before generating it. Compile and validate locally, then present the exact installation approval. After the user explicitly confirms, consume the one-time approval and install the Skill. Never install silently or treat an earlier general preference as installation approval.
 8. Roll back when the new workflow performs worse or routes unrelated requests.
 
 Never modify EvoPilot's approval policy through learned behavior. Explicit user instructions outrank learned memories.

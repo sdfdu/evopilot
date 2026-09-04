@@ -1,10 +1,10 @@
-import os, sqlite3, tempfile, unittest
+import json, os, shutil, sqlite3, tempfile, unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 import sys
 sys.path.insert(0,str(ROOT/"plugins"/"evopilot"/"scripts"))
-from core import analyze_habits, analyze_sequences, compile_skill, connect, context, demo, doctor, draft_skill, forget, forget_all, memories, memory_history, observe, quickstart, remember, review_action, validate_skill_bundle, weekly_report
+from core import analyze_habits, analyze_sequences, authorize_once, compile_skill, connect, context, demo, doctor, draft_skill, forget, forget_all, install_skill, memories, memory_history, observe, prepare_skill_install, promotion_notice, quickstart, remember, review_action, validate_skill_bundle, weekly_report
 
 class EvoPilotTests(unittest.TestCase):
  def setUp(self):
@@ -111,6 +111,35 @@ class EvoPilotTests(unittest.TestCase):
   workflow=analyze_sequences(3,2)[0]
   with tempfile.TemporaryDirectory() as drafts:
    with self.assertRaises(ValueError):draft_skill(workflow["fingerprint"],Path(drafts))
+
+ def test_ready_workflow_is_announced_and_requires_exact_install_approval(self):
+  for index in range(5):
+   session=f"promote-{index}"
+   observe("workspace","inspect","success",session_id=session)
+   observe("terminal","test","success",session_id=session)
+  workflow=analyze_sequences(3,2)[0]
+  self.assertIn("Explain this evidence to the user before generating it",promotion_notice())
+  with tempfile.TemporaryDirectory() as output, tempfile.TemporaryDirectory() as skills:
+   compiled=compile_skill(workflow["fingerprint"],Path(output))
+   prepared=prepare_skill_install(Path(compiled["bundle"]),Path(skills))
+   with self.assertRaises(PermissionError):
+    install_skill(Path(compiled["bundle"]),"0"*24,Path(skills))
+   skill_file=Path(compiled["bundle"])/"SKILL.md"
+   original=skill_file.read_text(encoding="utf-8")
+   skill_file.write_text(original+"\nTampered after review.\n",encoding="utf-8")
+   authorize_once(prepared["approval_id"],"user approved reviewed Skill installation")
+   with self.assertRaises(PermissionError):
+    install_skill(Path(compiled["bundle"]),prepared["approval_id"],Path(skills))
+   skill_file.write_text(original,encoding="utf-8")
+   prepared=prepare_skill_install(Path(compiled["bundle"]),Path(skills))
+   authorize_once(prepared["approval_id"],"user approved reviewed Skill installation")
+   installed=install_skill(Path(compiled["bundle"]),prepared["approval_id"],Path(skills))
+   self.assertTrue(installed["installed"])
+   manifest=json.loads((Path(skills)/compiled["name"]/"evopilot.json").read_text(encoding="utf-8"))
+   self.assertEqual(manifest["review"]["state"],"approved_and_installed")
+   shutil.rmtree(Path(skills)/compiled["name"])
+   with self.assertRaises(PermissionError):
+    install_skill(Path(compiled["bundle"]),prepared["approval_id"],Path(skills))
 
  def test_weekly_report_is_evidence_based(self):
   observe("terminal","test","success",session_id="report")

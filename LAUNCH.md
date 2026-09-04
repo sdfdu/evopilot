@@ -42,7 +42,7 @@ I built an open-source workflow compiler that turns repeated AI-agent work into 
 
 EvoPilot makes agent adaptation inspectable. It observes privacy-minimized tool categories and outcomes, detects repeated workflows, and compiles qualified sequences into `SKILL.md` plus a machine-readable evidence file.
 
-The generated Skill is never installed automatically. Dangerous or external actions still require a human. The project is local-first, dependency-free Python with SQLite, and includes a deterministic demo so you can inspect the full loop without donating any real usage data.
+Promotion-ready workflows are announced automatically. A generated Skill can be installed immediately after exact one-time user confirmation; dangerous or external actions still require a human. The project is local-first, dependency-free Python with SQLite, and includes a deterministic demo so you can inspect the full loop without donating any real usage data.
 
 I would love feedback on the evidence thresholds and which cross-agent compatibility test should come first.
 

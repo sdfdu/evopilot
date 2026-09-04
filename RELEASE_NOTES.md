@@ -1,4 +1,11 @@
-# EvoPilot v0.3.3 (local candidate)
+# EvoPilot v0.4.0 (local candidate)
+
+- Surface the strongest promotion-ready workflow automatically at task startup, including evidence and an instruction to explain it before generation.
+- Add `prepare-skill-install` and `install-skill` CLI commands plus matching MCP tools.
+- Bind each installation approval to the reviewed bundle contents and destination, consume it once, and mark the installed evidence manifest.
+- Preserve the human confirmation boundary: generation and validation are automatic, installation is immediate only after exact approval.
+
+# EvoPilot v0.3.3
 
 ## Changed
 

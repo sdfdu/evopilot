@@ -6,6 +6,7 @@ import json
 import math
 import os
 import re
+import shutil
 import sqlite3
 import sys
 from collections import Counter
@@ -14,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.3.3"
+VERSION = "0.4.0"
 SCHEMA_VERSION = 2
 SENSITIVE = re.compile(
     r"(api[_ -]?key|access[_ -]?token|refresh[_ -]?token|token|password|passcode|"
@@ -401,7 +402,25 @@ def startup_context(scope: str = "global") -> str:
         "- Never store secrets, raw prompts, raw tool inputs, raw tool outputs, or private file paths as behavioral memory.",
         "- Before publish, delete, credential, permission, system-setting, payment, or unknown actions, require human approval at the execution boundary.",
     ]
+    notice = promotion_notice()
+    if notice:
+        guidance += ["", notice]
     return "\n".join(guidance + ["", context(scope)])
+
+
+def promotion_notice() -> str | None:
+    """Return agent guidance for the strongest workflow ready for promotion."""
+    ready = [item for item in analyze_sequences(3, 4) if item["status"] in {"draft_ready", "stable"}]
+    if not ready:
+        return None
+    workflow = ready[0]
+    return (
+        "EvoPilot promotion notice: a learned workflow is ready to become a Skill: "
+        f"{' -> '.join(workflow['steps'])} ({workflow['evidence']} observations, "
+        f"{workflow['success_rate']:.0%} success, {workflow['status']}). "
+        "Explain this evidence to the user before generating it. Compile and validate the bundle, "
+        "then obtain exact one-time approval before installation."
+    )
 
 
 def weekly_report(days: int = 7) -> str:
@@ -711,6 +730,73 @@ def compile_skill(fingerprint: str, destination: Path) -> dict[str, Any]:
         status=str(row["status"]),
         destination=destination,
     )
+
+
+def _skill_install_target(bundle: Path, destination: Path | None = None) -> Path:
+    if destination is not None:
+        root = Path(destination).resolve()
+    else:
+        root = Path(os.environ.get("CODEX_HOME") or (Path.home() / ".codex")).resolve() / "skills"
+    return root / Path(bundle).resolve().name
+
+
+def _bundle_digest(bundle: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(item for item in Path(bundle).resolve().rglob("*") if item.is_file()):
+        digest.update(path.relative_to(bundle).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def prepare_skill_install(bundle: Path, destination: Path | None = None) -> dict[str, Any]:
+    """Validate a bundle and return the exact approval needed to install it."""
+    bundle = Path(bundle).resolve()
+    validation = validate_skill_bundle(bundle)
+    if not validation["valid"] or validation["simulated"]:
+        raise ValueError("Only a valid, non-simulated Skill bundle can be prepared for installation.")
+    target = _skill_install_target(bundle, destination)
+    if target.exists():
+        raise FileExistsError(f"Skill installation target already exists: {target}")
+    tool_input = {"bundle": str(bundle), "destination": str(target.parent), "digest": _bundle_digest(bundle)}
+    approval_id = approval_fingerprint("evopilot_install_skill", tool_input)
+    manifest = json.loads((bundle / "evopilot.json").read_text(encoding="utf-8"))
+    return {
+        "ready": True,
+        "skill": bundle.name,
+        "workflow": manifest["workflow"],
+        "evidence": manifest["evidence"],
+        "validation": validation,
+        "approval_id": approval_id,
+        "approval_required": True,
+        "message": "Explain the workflow and evidence to the user, then authorize this exact approval_id only after explicit confirmation.",
+    }
+
+
+def install_skill(bundle: Path, approval_id: str, destination: Path | None = None) -> dict[str, Any]:
+    """Install one reviewed bundle after consuming an exact, one-time approval."""
+    bundle = Path(bundle).resolve()
+    target = _skill_install_target(bundle, destination)
+    validation = validate_skill_bundle(bundle)
+    if not validation["valid"] or validation["simulated"]:
+        raise ValueError("Only a valid, non-simulated Skill bundle can be installed.")
+    if target.exists():
+        raise FileExistsError(f"Skill installation target already exists: {target}")
+    expected = approval_fingerprint(
+        "evopilot_install_skill",
+        {"bundle": str(bundle), "destination": str(target.parent), "digest": _bundle_digest(bundle)},
+    )
+    if approval_id != expected or not consume_approval(approval_id):
+        raise PermissionError("Exact, unexpired one-time approval is required before Skill installation.")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(bundle, target)
+    evidence_file = target / "evopilot.json"
+    manifest = json.loads(evidence_file.read_text(encoding="utf-8"))
+    manifest["review"] = {"state": "approved_and_installed", "installed": True, "installed_at": utc_now()}
+    evidence_file.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    audit_gate(f"install_skill:{bundle.name}", "approved_once", f"Consumed approval {approval_id} and installed reviewed Skill.")
+    return {"installed": True, "name": bundle.name, "restart_required": True}
 
 
 def draft_skill(fingerprint: str, destination: Path) -> dict[str, Any]:

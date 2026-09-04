@@ -12,7 +12,7 @@ Turn repeated work into evidence-backed, portable Agent Skills.
 
 EvoPilot watches privacy-minimized outcomes, detects workflows that repeatedly succeed, and compiles them into reviewable [Open Agent Skills](https://agentskills.io/) bundles. It gives your agent a way to improve from real work without silently changing permissions or model weights.
 
-> EvoPilot learns workflows, not personalities. Explicit user instructions always win, and generated Skills are never installed automatically.
+> EvoPilot learns workflows, not personalities. Explicit user instructions always win. It announces promotion-ready workflows, validates generated Skills, and requires exact one-time confirmation before installation.
 
 ## See it in 60 seconds
 
@@ -129,7 +129,7 @@ EvoPilot does not promote a sequence after one lucky run.
 | Draft ready | At least 5 observations and 3 successful outcomes |
 | Stable | At least 8 observations and 3 successful outcomes |
 
-Compilation is allowed only for `draft_ready` or `stable` workflows. The result remains uninstalled with `pending_human_review` recorded in its evidence file.
+Compilation is allowed only for `draft_ready` or `stable` workflows. EvoPilot announces the evidence before generation, keeps the validated bundle at `pending_human_review`, and can install it immediately after the user grants the exact one-time approval.
 
 Before recommending review, the validator checks required files, frontmatter, directory naming, provenance, workflow shape, evidence arithmetic, promotion thresholds, safety boundaries, review state, and portable format. This is structural validation: it does not execute the workflow or claim compatibility with every agent client.
 
@@ -161,6 +161,8 @@ python plugins/evopilot/scripts/evopilot.py context
 python plugins/evopilot/scripts/evopilot.py sequences
 python plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> <destination>
 python plugins/evopilot/scripts/evopilot.py validate-skill <bundle-directory>
+python plugins/evopilot/scripts/evopilot.py prepare-skill-install <bundle-directory>
+python plugins/evopilot/scripts/evopilot.py install-skill <bundle-directory> <approval-id>
 python plugins/evopilot/scripts/evopilot.py report --days 7
 python plugins/evopilot/scripts/evopilot.py forget --all
 ```
@@ -193,7 +195,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), [LAUNCH.md](LA
 
 - Workflow detection is transparent rule-based sequence mining, not model training or semantic imitation.
 - Codex hooks see tool events, not every gesture inside arbitrary desktop applications.
-- A compiled Skill is a proposal. A user must review, validate, and install it.
+- A compiled Skill is a proposal. EvoPilot surfaces it automatically, but installation requires explicit one-time user confirmation bound to the reviewed bundle contents and destination.
 - EvoPilot does not generate or enable credentialed MCP servers automatically.
 - The policy gate uses deterministic command and tool-name patterns and cannot prove that every command is safe.
 - EvoPilot does not train or modify model weights.

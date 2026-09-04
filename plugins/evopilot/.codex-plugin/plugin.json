@@ -1,6 +1,6 @@
 {
   "name": "evopilot",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "A local-first workflow compiler that turns repeated successful work into evidence-backed, portable Agent Skills.",
   "author": {
     "name": "duke"

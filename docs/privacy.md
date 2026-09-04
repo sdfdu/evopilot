@@ -23,7 +23,7 @@ Sensitive-looking keys or values are rejected or redacted before storage.
 
 ## Human control
 
-Generated Skills are never installed automatically. Publish, delete, credential, permission, system-setting, payment, and unknown actions require human approval at the execution boundary.
+Promotion-ready workflows are announced automatically. Generated Skills are validated locally and installed only after exact one-time user confirmation. Publish, delete, credential, permission, system-setting, payment, and unknown actions require human approval at the execution boundary.
 
 Use:
 

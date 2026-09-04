@@ -1,6 +1,6 @@
 # Skill lifecycle
 
-EvoPilot treats a generated Skill as a reviewable proposal, not an automatic agent upgrade.
+EvoPilot automatically announces promotion-ready workflows. Generation and validation can proceed locally, while installation remains an exact, one-time confirmed action.
 
 ## 1. Observe
 
@@ -18,7 +18,7 @@ Repeated actions become habit candidates. Repeated multi-step work becomes workf
 
 ## 3. Compile
 
-Only `draft_ready` and `stable` workflows can be compiled:
+At task startup, EvoPilot tells the agent when the strongest learned workflow reaches `draft_ready` or `stable`. The agent explains the evidence before compiling:
 
 ```bash
 python plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> ./drafts
@@ -49,4 +49,17 @@ A person should confirm:
 
 ## 6. Install or discard
 
-Install only after review. Discard weak, stale, overbroad, or unsafe bundles.
+Prepare the exact installation after review:
+
+```bash
+python plugins/evopilot/scripts/evopilot.py prepare-skill-install ./drafts/<skill-name>
+```
+
+The result contains an approval ID bound to the reviewed bundle contents and destination. After the user explicitly confirms that exact installation, authorize the ID and install:
+
+```bash
+python plugins/evopilot/scripts/evopilot.py approve <approval-id>
+python plugins/evopilot/scripts/evopilot.py install-skill ./drafts/<skill-name> <approval-id>
+```
+
+The approval expires after ten minutes, works once, and becomes invalid if the bundle changes. Discard weak, stale, overbroad, or unsafe bundles.
