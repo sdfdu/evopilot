@@ -22,3 +22,4 @@ Thanks for helping EvoPilot become more useful without becoming less trustworthy
 
 Issues should include the observed behavior, expected behavior, reproduction steps, and whether local EvoPilot data was involved. Redact personal memory before sharing logs.
 
+By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Setup questions and design proposals belong in GitHub Discussions; see [Support](SUPPORT.md).

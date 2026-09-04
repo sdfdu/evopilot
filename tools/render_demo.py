@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "demo.gif"
+SOCIAL_OUT = ROOT / "docs" / "social-preview.png"
 W, H = 1200, 675
 BG = "#080d1a"
 PANEL = "#11192b"
@@ -118,7 +119,37 @@ def frame(index, subtitle, lines):
     return image
 
 
+def social_preview():
+    width, height = 1280, 640
+    image = Image.new("RGB", (width, height), BG)
+    draw = ImageDraw.Draw(image)
+    draw.rounded_rectangle((58, 52, width - 58, height - 52), radius=28, fill=PANEL, outline="#354466", width=3)
+    draw.rounded_rectangle((92, 88, 270, 126), radius=19, fill="#231f42")
+    draw.text((116, 96), "OPEN SOURCE", font=SMALL, fill=PURPLE)
+    draw.text((92, 166), "EvoPilot", font=font(70, True), fill="#f7f9ff")
+    draw.text((96, 265), "Compile repeated AI-agent work", font=font(35, True), fill=TEXT)
+    draw.text((96, 315), "into quality-checked Skills.", font=font(35, True), fill=TEXT)
+
+    labels = [
+        ("LOCAL-FIRST", GREEN),
+        ("EVIDENCE-BACKED", AMBER),
+        ("REVIEWABLE", PURPLE),
+    ]
+    x = 96
+    for label, color in labels:
+        box = draw.textbbox((0, 0), label, font=BOLD)
+        label_width = box[2] - box[0]
+        draw.rounded_rectangle((x, 406, x + label_width + 42, 454), radius=12, fill="#0b1222", outline=color, width=2)
+        draw.text((x + 21, 419), label, font=BOLD, fill=color)
+        x += label_width + 62
+
+    draw.text((96, 505), "github.com/sdfdu/evopilot", font=BODY, fill=MUTED)
+    return image
+
+
 OUT.parent.mkdir(parents=True, exist_ok=True)
 frames = [frame(index, *item) for index, item in enumerate(STORY)]
 frames[0].save(OUT, save_all=True, append_images=frames[1:], duration=[1900] * len(frames), loop=0, optimize=True)
+social_preview().save(SOCIAL_OUT, optimize=True)
 print(OUT)
+print(SOCIAL_OUT)

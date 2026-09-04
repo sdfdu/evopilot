@@ -1,37 +1,22 @@
 # Roadmap
 
-## 0.3 — Workflow Compiler
+## Shipped
 
-- Portable Skill bundles with provenance and measured evidence. ✅
-- A deterministic first-run demo and local health diagnostics. ✅
-- Structural Skill validation and transparent quality scoring. ✅
-- First-run quickstart and human-readable bundle explainer. ✅
-- Local CI for tests, diagnostics, and demo validation. ✅
-- Isolated replay tests and review UX.
-- Before/after metrics when measured duration and retry data exist.
+- Privacy-minimized local memory and workflow evidence.
+- Portable Skill compilation with provenance and review state.
+- Deterministic demo, diagnostics, quickstart, and CI.
+- Structural validation and semantic quality annotations.
+- Install blocking for generic, repetitive, unsafe, low-evidence, or underspecified Skills.
+- Exact one-time approval for reviewed Skill installation.
 
-## 0.4 — Cross-agent portability
+## Next
 
-- Verified installation guides for agents that implement Open Agent Skills.
-- Import/export compatibility tests instead of unverified platform claims.
-- Workflow diff, activation, rollback, and quality scoring.
+- Behavioral replay evaluation beyond deterministic checks.
+- Verified compatibility tests for agents that implement Open Agent Skills.
+- Workflow diff, rollback, and measured before/after results.
+- Focused development and browser-research workflow examples.
 
-## 0.5 - Skill quality and curation
-
-- Separate structural validation from semantic quality scoring. Done.
-- Generate human-readable and machine-readable quality annotations. Done.
-- Block generic or underspecified Skills from installation. Done.
-- Filter generic and duplicate sequences from automatic promotion. Done.
-- Add behavioral replay evaluation beyond deterministic checks.
-
-## 0.5 — App packs
-
-- Browser research pack.
-- Development workflow pack.
-- Knowledge-base pack.
-- Cross-app workflow graphs and opt-in MCP scaffolding.
-
-## Principles that do not change
+## Principles
 
 - Explicit instructions beat memory.
 - Secrets are not behavioral memory.

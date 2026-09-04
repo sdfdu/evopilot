@@ -1,4 +1,4 @@
-# EvoPilot v0.5.0 (local candidate)
+# EvoPilot v0.5.0
 
 - Separate structural validation from semantic Skill quality assessment.
 - Generate `QUALITY_REPORT.md` and machine-readable severity-coded annotations for every new bundle.

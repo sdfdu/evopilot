@@ -2,33 +2,33 @@
 
 ## One-line pitch
 
-EvoPilot is a local-first workflow compiler that turns repeated successful agent work into evidence-backed, portable Agent Skills.
+EvoPilot is a local-first workflow compiler that turns repeated AI-agent work into evidence-backed, quality-checked Skills.
 
 ## Show HN
 
 ### Title
 
-Show HN: EvoPilot — compile repeated AI-agent workflows into portable Skills
+Show HN: EvoPilot – compile repeated AI-agent workflows into quality-checked Skills
 
 ### Post
 
 I built EvoPilot because useful agent workflows usually disappear into chat history and prompt fragments.
 
-EvoPilot records privacy-minimized outcomes, finds sequences that repeatedly work, and compiles qualified workflows into a portable Open Agent Skills bundle. Each bundle contains the workflow plus machine-readable provenance, evidence counts, success rate, and review status.
+EvoPilot records privacy-minimized outcomes, finds sequences that repeatedly work, and compiles qualified workflows into portable Open Agent Skills bundles. Each bundle contains the workflow, provenance, evidence, review state, and quality findings.
 
-It is intentionally not unrestricted self-modification. Generated Skills remain uninstalled until a person reviews them. Risky and externally consequential actions fail closed behind exact, short-lived, one-time approvals.
+The difficult part is deciding what should not become a Skill. Separate structural and semantic gates reject generic, repetitive, low-evidence, or underspecified bundles. Installation requires an exact, short-lived, one-time approval bound to the reviewed contents and destination.
 
-The runtime is dependency-free Python and SQLite. The repository includes a deterministic 60-second demo, local diagnostics, six Codex Skills, lifecycle hooks, a 19-tool MCP server, and tests.
+The runtime is dependency-free Python and SQLite. The repository includes a deterministic 60-second demo, local diagnostics, six Codex Skills, lifecycle hooks, a 23-tool MCP server, and 24 behavioral tests.
 
 Repository: https://github.com/sdfdu/evopilot
 
-I would especially value feedback on portable workflow evidence and cross-agent Skill compatibility.
+I would especially value feedback on the evidence thresholds and which cross-agent compatibility test should come first.
 
 ## X / Bluesky
 
 I built EvoPilot: a local-first workflow compiler for AI agents.
 
-It detects repeated successful work and compiles it into a portable Agent Skill with evidence and provenance. No model-weight training, no raw tool logs, and no silent permission growth.
+It detects repeated successful work and compiles it into a portable Agent Skill with evidence, provenance, and install-blocking quality checks. No model-weight training, raw tool logs, or silent permission growth.
 
 60-second demo: https://github.com/sdfdu/evopilot
 
@@ -36,15 +36,15 @@ It detects repeated successful work and compiles it into a portable Agent Skill 
 
 ### Title
 
-I built an open-source workflow compiler that turns repeated AI-agent work into portable Skills
+I built an open-source workflow compiler that turns repeated AI-agent work into quality-checked Skills
 
 ### Body
 
-EvoPilot makes agent adaptation inspectable. It observes privacy-minimized tool categories and outcomes, detects repeated workflows, and compiles qualified sequences into `SKILL.md` plus a machine-readable evidence file.
+EvoPilot makes agent adaptation inspectable. It observes privacy-minimized tool categories and outcomes, detects repeated workflows, and compiles qualified sequences into `SKILL.md`, provenance, and a human-readable quality report.
 
-Promotion-ready workflows are announced automatically. A generated Skill can be installed immediately after exact one-time user confirmation; dangerous or external actions still require a human. The project is local-first, dependency-free Python with SQLite, and includes a deterministic demo so you can inspect the full loop without donating any real usage data.
+Separate structural and semantic gates reject generic, repetitive, low-evidence, or underspecified Skills. A valid bundle can be installed after exact one-time user confirmation; dangerous or external actions still require a human. The project is local-first, dependency-free Python with SQLite, and includes a deterministic demo that does not enter learned history.
 
-I would love feedback on the evidence thresholds and which cross-agent compatibility test should come first.
+I would value feedback on the evidence thresholds and which cross-agent compatibility test should come first.
 
 https://github.com/sdfdu/evopilot
 
@@ -52,10 +52,20 @@ https://github.com/sdfdu/evopilot
 
 I released EvoPilot, an open-source workflow compiler for AI agents.
 
-Instead of leaving successful routines inside chat history, EvoPilot detects repeated workflows and turns them into portable, reviewable Agent Skills. Each bundle carries its evidence and provenance, while dangerous actions and new permissions stay human-approved.
+Instead of leaving successful routines inside chat history, EvoPilot detects repeated workflows and turns qualified ones into portable Agent Skills. Every bundle carries evidence, provenance, and a quality report; weak Skills are blocked before installation, while dangerous actions and new permissions stay human-approved.
 
 Project and 60-second demo: https://github.com/sdfdu/evopilot
 
-## Suggested GitHub topics
+## GitHub metadata
 
-`ai-agent`, `agent-skills`, `open-agent-skills`, `codex`, `mcp`, `workflow-automation`, `agent-memory`, `developer-tools`, `python`, `sqlite`
+Description:
+
+```text
+Local-first workflow compiler that turns repeated AI-agent work into evidence-backed, quality-checked Skills.
+```
+
+Topics:
+
+```text
+ai-agents agentic-ai agent-skills workflow-automation codex mcp developer-tools local-first privacy ai-safety python sqlite
+```
