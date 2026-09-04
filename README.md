@@ -46,7 +46,8 @@ The demo is clearly marked as simulated and never enters your learned history. I
 evopilot-demo/
 └── workspace-inspect-workspace-apply-patch-terminal/
     ├── SKILL.md       # portable workflow instructions
-    ├── evopilot.json  # provenance, evidence, status, and review state
+    ├── evopilot.json  # provenance, evidence, quality, status, and review state
+    ├── QUALITY_REPORT.md # quality score and annotations
     └── WHAT_HAPPENED.md
 ```
 
@@ -115,8 +116,10 @@ See [docs/how-to-use.md](docs/how-to-use.md) for a short operator guide.
 - A `quickstart` command and demo explainer for first-run onboarding.
 - `doctor` diagnostics for Python, plugin files, and database health.
 - Weekly evidence reports covering outcomes, failures, corrections, conflicts, and promotion candidates.
-- Deterministic bundle validation with a 0–100 quality score and explicit limitations.
-- A dependency-free MCP server exposing 17 memory, learning, compilation, validation, diagnostics, export, and approval tools.
+- Deterministic structural bundle validation with a 0–100 score and explicit limitations.
+- A separate semantic quality gate with install-blocking annotations for generic, repetitive, or underspecified Skills.
+- Human-readable `QUALITY_REPORT.md` plus machine-readable quality metadata in every generated bundle.
+- A dependency-free MCP server exposing 23 memory, learning, compilation, quality, diagnostics, export, installation, and approval tools.
 - Six focused Skills for ideation, development, tool operation, coaching, monitoring, and extension creation.
 
 ## Evidence thresholds
@@ -131,7 +134,9 @@ EvoPilot does not promote a sequence after one lucky run.
 
 Compilation is allowed only for `draft_ready` or `stable` workflows. EvoPilot announces the evidence before generation, keeps the validated bundle at `pending_human_review`, and can install it immediately after the user grants the exact one-time approval.
 
-Before recommending review, the validator checks required files, frontmatter, directory naming, provenance, workflow shape, evidence arithmetic, promotion thresholds, safety boundaries, review state, and portable format. This is structural validation: it does not execute the workflow or claim compatibility with every agent client.
+Before recommending review, the validator checks required files, frontmatter, directory naming, provenance, workflow shape, evidence arithmetic, promotion thresholds, safety boundaries, review state, and portable format. A separate quality gate annotates generic sequences, duplicate actions, weak discovery descriptions, missing decision guidance, missing validation contracts, missing stop conditions, and weak outcome evidence. A Skill must pass both gates before installation preparation.
+
+See [docs/quality-gates.md](docs/quality-gates.md) for scoring, annotation severities, and the anti-sprawl rule.
 
 ## Safety model
 
@@ -161,6 +166,8 @@ python plugins/evopilot/scripts/evopilot.py context
 python plugins/evopilot/scripts/evopilot.py sequences
 python plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> <destination>
 python plugins/evopilot/scripts/evopilot.py validate-skill <bundle-directory>
+python plugins/evopilot/scripts/evopilot.py assess-skill <bundle-directory>
+python plugins/evopilot/scripts/evopilot.py annotate-skill <bundle-directory>
 python plugins/evopilot/scripts/evopilot.py prepare-skill-install <bundle-directory>
 python plugins/evopilot/scripts/evopilot.py install-skill <bundle-directory> <approval-id>
 python plugins/evopilot/scripts/evopilot.py report --days 7
@@ -189,7 +196,7 @@ python plugins/evopilot/scripts/evopilot.py doctor --plugin-root plugins/evopilo
 python tools/render_demo.py
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), [LAUNCH.md](LAUNCH.md), [docs/privacy.md](docs/privacy.md), and [docs/skill-lifecycle.md](docs/skill-lifecycle.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), [LAUNCH.md](LAUNCH.md), [docs/privacy.md](docs/privacy.md), [docs/skill-lifecycle.md](docs/skill-lifecycle.md), and [docs/quality-gates.md](docs/quality-gates.md).
 
 ## Current limits
 

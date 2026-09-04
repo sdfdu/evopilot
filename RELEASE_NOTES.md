@@ -1,4 +1,14 @@
-# EvoPilot v0.4.0 (local candidate)
+# EvoPilot v0.5.0 (local candidate)
+
+- Separate structural validation from semantic Skill quality assessment.
+- Generate `QUALITY_REPORT.md` and machine-readable severity-coded annotations for every new bundle.
+- Add `assess-skill` and `annotate-skill` commands plus matching MCP tools.
+- Block pure generic tool sequences, low-success workflows, and underspecified bundles from installation preparation.
+- Generate stronger Skills with activation boundaries, step guidance, decision rules, validation contracts, and stop conditions.
+- Filter generic and adjacent-duplicate workflows out of automatic promotion notices.
+- Expand the MCP surface from 21 to 23 tools and add tests for annotation refresh, quality blocking, and anti-sprawl behavior.
+
+# EvoPilot v0.4.0
 
 - Surface the strongest promotion-ready workflow automatically at task startup, including evidence and an instruction to explain it before generation.
 - Add `prepare-skill-install` and `install-skill` CLI commands plus matching MCP tools.

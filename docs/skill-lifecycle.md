@@ -28,6 +28,7 @@ The output bundle contains:
 
 - `SKILL.md`
 - `evopilot.json`
+- `QUALITY_REPORT.md`
 - `WHAT_HAPPENED.md`
 
 ## 4. Validate
@@ -38,6 +39,15 @@ python plugins/evopilot/scripts/evopilot.py validate-skill ./drafts/<skill-name>
 
 Validation checks structure, evidence arithmetic, promotion thresholds, safety boundaries, human review state, and portable format. It does not execute the workflow.
 
+Assess semantic quality and refresh annotations after any manual edit:
+
+```bash
+python plugins/evopilot/scripts/evopilot.py assess-skill ./drafts/<skill-name>
+python plugins/evopilot/scripts/evopilot.py annotate-skill ./drafts/<skill-name>
+```
+
+Purely generic tool sequences and bundles missing decision, validation, or stop guidance are annotated and can be blocked from installation. See [quality-gates.md](quality-gates.md).
+
 ## 5. Review
 
 A person should confirm:
@@ -46,6 +56,7 @@ A person should confirm:
 - Explicit user instructions remain higher priority than learned behavior.
 - Dangerous or external actions still require approval.
 - The evidence is real and sufficient.
+- Quality annotations are resolved or explicitly understood.
 
 ## 6. Install or discard
 

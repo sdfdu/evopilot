@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 SCHEMA_VERSION = 2
 SENSITIVE = re.compile(
     r"(api[_ -]?key|access[_ -]?token|refresh[_ -]?token|token|password|passcode|"
@@ -410,7 +410,17 @@ def startup_context(scope: str = "global") -> str:
 
 def promotion_notice() -> str | None:
     """Return agent guidance for the strongest workflow ready for promotion."""
-    ready = [item for item in analyze_sequences(3, 4) if item["status"] in {"draft_ready", "stable"}]
+    ready = []
+    for item in analyze_sequences(3, 4):
+        if item["status"] not in {"draft_ready", "stable"}:
+            continue
+        actions = [_step_action(step) for step in item["steps"]]
+        generic = {"shell", "inspect", "edit", "apply_patch", "bash"}
+        if all(action in generic for action in actions):
+            continue
+        if any(left == right for left, right in zip(actions, actions[1:])):
+            continue
+        ready.append(item)
     if not ready:
         return None
     workflow = ready[0]
@@ -500,6 +510,166 @@ def _skill_name(pattern: str) -> str:
     return name or "evopilot-workflow"
 
 
+def _step_action(step: str) -> str:
+    return step.split(":", 1)[-1].strip().casefold()
+
+
+def _skill_purpose(steps: list[str]) -> str:
+    actions = {_step_action(step) for step in steps}
+    if "test" in actions:
+        return "local code changes that require targeted tests"
+    if "build" in actions:
+        return "local code changes that require a verified build"
+    if "git_read" in actions:
+        return "repository inspection and evidence-backed change planning"
+    return "local workspace changes that require inspection and verification"
+
+
+def _skill_description(steps: list[str]) -> str:
+    return f"Apply a learned {' -> '.join(steps)} workflow for {_skill_purpose(steps)}; skip it when the task does not need every stage."
+
+
+def _step_instruction(step: str) -> str:
+    action = _step_action(step)
+    instructions = {
+        "inspect": "Inspect the smallest relevant state and collect only evidence needed for the next decision.",
+        "git_read": "Read the relevant Git status, diff, log, or branch state without changing the repository.",
+        "edit": "Make the smallest scoped edit that satisfies the request and preserve unrelated user work.",
+        "apply_patch": "Apply a precise patch and preserve unrelated user work.",
+        "test": "Run the narrowest relevant test first; broaden only when risk or failures justify it.",
+        "build": "Run the relevant build or static check and inspect actionable failures.",
+        "shell": "Run only the authorized local command needed for the task or its verification.",
+        "bash": "Use Bash only when it is available and appropriate for the current environment.",
+    }
+    return instructions.get(action, f"Perform `{step}` only when it materially advances the user's requested outcome.")
+
+
+def assess_skill_quality(bundle: Path) -> dict[str, Any]:
+    """Assess semantic usefulness and annotate quality risks without mutating the bundle."""
+    bundle = Path(bundle).resolve()
+    skill_file = bundle / "SKILL.md"
+    evidence_file = bundle / "evopilot.json"
+    if not skill_file.is_file() or not evidence_file.is_file():
+        return {
+            "score": 0,
+            "level": "blocked",
+            "installable": False,
+            "annotations": [{"severity": "error", "code": "missing-required-files", "message": "SKILL.md and evopilot.json are required."}],
+        }
+    try:
+        skill_text = skill_file.read_text(encoding="utf-8")
+        manifest = json.loads(evidence_file.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        return {
+            "score": 0,
+            "level": "blocked",
+            "installable": False,
+            "annotations": [{"severity": "error", "code": "unreadable-bundle", "message": f"{type(exc).__name__}: {exc}"}],
+        }
+
+    annotations: list[dict[str, str]] = []
+    score = 100
+
+    def note(severity: str, code: str, message: str, penalty: int = 0) -> None:
+        nonlocal score
+        annotations.append({"severity": severity, "code": code, "message": message})
+        score -= penalty
+
+    workflow = manifest.get("workflow", {}) if isinstance(manifest, dict) else {}
+    steps = workflow.get("steps", []) if isinstance(workflow, dict) else []
+    actions = [_step_action(step) for step in steps if isinstance(step, str)]
+    evidence = manifest.get("evidence", {}) if isinstance(manifest, dict) else {}
+    observations = evidence.get("observations", 0) if isinstance(evidence, dict) else 0
+    success_rate = evidence.get("success_rate", 0.0) if isinstance(evidence, dict) else 0.0
+
+    generic = {"shell", "inspect", "edit", "apply_patch", "bash"}
+    if actions and all(action in generic for action in actions):
+        note("error", "generic-tool-sequence", "Every step is a generic tool action; keep it as workflow evidence or merge it into a task-specific Skill before installation.", 30)
+    if any(left == right for left, right in zip(actions, actions[1:])):
+        note("warning", "repeated-adjacent-step", "Adjacent duplicate actions may be execution noise rather than reusable guidance.", 15)
+    if len(set(actions)) < 2:
+        note("error", "insufficient-action-diversity", "A reusable workflow needs at least two distinct actions.", 30)
+
+    description = ""
+    if skill_text.startswith("---\n"):
+        closing = skill_text.find("\n---\n", 4)
+        if closing != -1:
+            for line in skill_text[4:closing].splitlines():
+                if line.startswith("description:"):
+                    description = line.split(":", 1)[1].strip()
+                    break
+    if len(description) < 60 or "when" not in description.casefold():
+        note("warning", "weak-discovery-description", "Describe the concrete task and when the Skill should or should not activate.", 15)
+
+    required_sections = {
+        "## when to use": "missing-activation-boundary",
+        "## decision rules": "missing-decision-rules",
+        "## validation": "missing-validation-contract",
+        "## stop conditions": "missing-stop-conditions",
+    }
+    normalized = skill_text.casefold()
+    for heading, code in required_sections.items():
+        if heading not in normalized:
+            note("warning", code, f"Add a `{heading.title()}` section with actionable guidance.", 10)
+
+    if isinstance(success_rate, (int, float)) and success_rate < 0.8:
+        note("error", "low-success-rate", "Observed success is below 80%; collect better evidence before installation.", 25)
+    elif isinstance(success_rate, (int, float)) and success_rate < 0.95:
+        note("warning", "mixed-outcomes", "Observed success is below 95%; document known failure cases.", 5)
+    if isinstance(observations, int) and observations < 8:
+        note("info", "limited-evidence", "The workflow is draft-ready but has fewer than eight observations.", 5)
+    simulated = manifest.get("simulated") is True if isinstance(manifest, dict) else False
+    if simulated:
+        note("info", "simulated-evidence", "Demo evidence cannot authorize installation.")
+
+    score = max(0, score)
+    errors = any(item["severity"] == "error" for item in annotations)
+    level = "high" if score >= 85 else "acceptable" if score >= 70 else "needs_revision" if score >= 50 else "blocked"
+    return {"score": score, "level": level, "installable": score >= 70 and not errors and not simulated, "annotations": annotations}
+
+
+def _quality_report(name: str, quality: dict[str, Any]) -> str:
+    lines = [
+        "# Skill quality report",
+        "",
+        f"- Skill: `{name}`",
+        f"- Quality score: {quality['score']}/100",
+        f"- Level: `{quality['level']}`",
+        f"- Installable: {'yes' if quality['installable'] else 'no'}",
+        "",
+        "## Annotations",
+        "",
+    ]
+    annotations = quality.get("annotations", [])
+    if annotations:
+        lines += [f"- **[{item['severity'].upper()}] {item['code']}**: {item['message']}" for item in annotations]
+    else:
+        lines.append("- No quality issues detected by the deterministic checks.")
+    lines += ["", "This report checks deterministic quality signals. Human review is still responsible for domain correctness and real-world usefulness.", ""]
+    return "\n".join(lines)
+
+
+def annotate_skill_quality(bundle: Path) -> dict[str, Any]:
+    """Refresh machine-readable and human-readable quality annotations for a bundle."""
+    bundle = Path(bundle).resolve()
+    quality = assess_skill_quality(bundle)
+    evidence_file = bundle / "evopilot.json"
+    if not evidence_file.is_file():
+        return quality
+    manifest = json.loads(evidence_file.read_text(encoding="utf-8"))
+    manifest["quality"] = {
+        "score": quality["score"],
+        "level": quality["level"],
+        "installable": quality["installable"],
+        "annotations": quality["annotations"],
+        "assessed_at": utc_now(),
+    }
+    evidence_file.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    quality_file = bundle / "QUALITY_REPORT.md"
+    quality_file.write_text(_quality_report(bundle.name, quality), encoding="utf-8")
+    return {**quality, "report_path": str(quality_file)}
+
+
 def validate_skill_bundle(bundle: Path) -> dict[str, Any]:
     """Structurally validate and score a compiled Skill bundle without executing it."""
     bundle = Path(bundle).resolve()
@@ -585,12 +755,19 @@ def validate_skill_bundle(bundle: Path) -> dict[str, Any]:
     score = sum(item["weight"] for item in checks if item["passed"])
     valid = all(item["passed"] for item in checks)
     simulated = manifest.get("simulated") is True
-    recommendation = "demo_only" if simulated and valid else "ready_for_human_review" if valid else "needs_revision"
+    quality = assess_skill_quality(bundle)
+    recommendation = (
+        "demo_only" if simulated and valid
+        else "ready_for_human_review" if valid and quality["installable"]
+        else "needs_quality_revision" if valid
+        else "needs_revision"
+    )
     return {
         "valid": valid,
         "score": score,
         "recommendation": recommendation,
         "simulated": simulated,
+        "quality": quality,
         "checks": checks,
         "limitations": [
             "Structural validation does not execute the workflow.",
@@ -615,22 +792,28 @@ def _write_skill_bundle(
     skill_file = skill_dir / "SKILL.md"
     evidence_file = skill_dir / "evopilot.json"
     explainer_file = skill_dir / "WHAT_HAPPENED.md"
+    quality_file = skill_dir / "QUALITY_REPORT.md"
     if skill_dir.exists():
         raise FileExistsError(f"Bundle already exists: {skill_dir}")
     skill_dir.mkdir(parents=True, exist_ok=False)
-    steps = "\n".join(f"{index}. {step}" for index, step in enumerate(definition.get("steps", []), 1))
+    learned_steps = [str(step) for step in definition.get("steps", [])]
+    steps = "\n".join(f"{index}. **`{step}`** — {_step_instruction(step)}" for index, step in enumerate(learned_steps, 1))
     completed = max(0, int(evidence_count))
     successful = max(0, min(int(success_count), completed))
     success_rate = successful / completed if completed else 0.0
     demo_note = " This evidence is simulated for demonstration only." if simulated else ""
     body = f"""---
 name: {name}
-description: Run a locally learned workflow only when the user's task matches its trigger and the required tools are already authorized.
+description: {_skill_description(learned_steps)}
 ---
 
 # {name.replace('-', ' ').title()}
 
-This is an EvoPilot-generated portable Skill bundle. A person must review and validate it before installation.{demo_note}
+Use this evidence-backed workflow only when every stage helps complete the user's request.{demo_note}
+
+## When to use
+
+Use this Skill for {_skill_purpose(learned_steps)}. Skip it for explanation-only requests, read-only reviews, or tasks that do not require the full workflow.
 
 ## Evidence
 
@@ -643,6 +826,25 @@ This is an EvoPilot-generated portable Skill bundle. A person must review and va
 ## Workflow
 
 {steps}
+
+## Decision rules
+
+- Treat the learned sequence as a preferred shape, not a reason to perform irrelevant actions.
+- Select the narrowest files, commands, and checks that can establish the requested outcome.
+- Preserve unrelated user changes and repository conventions.
+- When evidence contradicts the expected workflow, follow the evidence and record the deviation for later review.
+
+## Validation
+
+- Verify the smallest observable outcome that proves the change works.
+- Use targeted tests or checks before broader suites unless the risk justifies broader validation.
+- Report what was verified and clearly identify anything that remains unverified.
+
+## Stop conditions
+
+- Stop when the task no longer matches this workflow or a required tool is unavailable.
+- Stop before destructive, external, credential, permission, or publication actions and obtain human approval.
+- Do not loop after repeated failures; summarize the decisive evidence and request direction when necessary.
 
 ## Safety
 
@@ -660,7 +862,7 @@ This is an EvoPilot-generated portable Skill bundle. A person must review and va
         "workflow": {
             "fingerprint": fingerprint,
             "pattern": pattern,
-            "steps": definition.get("steps", []),
+            "steps": learned_steps,
             "status": status,
         },
         "evidence": {
@@ -672,6 +874,7 @@ This is an EvoPilot-generated portable Skill bundle. A person must review and va
     }
     skill_file.write_text(body, encoding="utf-8")
     evidence_file.write_text(json.dumps(evidence, ensure_ascii=False, indent=2), encoding="utf-8")
+    quality = annotate_skill_quality(skill_dir)
     explainer_file.write_text(
         f"""# What happened
 
@@ -687,12 +890,14 @@ EvoPilot compiled a repeated workflow into a review-only Agent Skill bundle.
 
 - `SKILL.md` contains the portable workflow instructions.
 - `evopilot.json` contains provenance, evidence, workflow status, and review state.
+- `QUALITY_REPORT.md` explains the deterministic quality score and annotations.
 
 ## Review checklist
 
 - Confirm the workflow matches work you actually want repeated.
 - Confirm the safety section says to follow explicit user instructions first.
 - Confirm publish, delete, credential, permission, and external actions still require human approval.
+- Resolve or explicitly accept every warning in `QUALITY_REPORT.md`.
 - Run `evopilot validate-skill {skill_dir}` before installing or sharing the bundle.
 """,
         encoding="utf-8",
@@ -702,12 +907,14 @@ EvoPilot compiled a repeated workflow into a review-only Agent Skill bundle.
         "bundle": str(skill_dir),
         "evidence_path": str(evidence_file),
         "explainer_path": str(explainer_file),
+        "quality_path": str(quality_file),
         "name": name,
         "status": "compiled",
         "format": "open-agent-skills",
         "installed": False,
         "requires_human_review": True,
         "simulated": simulated,
+        "quality": quality,
     }
     result["validation"] = validate_skill_bundle(skill_dir)
     return result
@@ -753,9 +960,10 @@ def _bundle_digest(bundle: Path) -> str:
 def prepare_skill_install(bundle: Path, destination: Path | None = None) -> dict[str, Any]:
     """Validate a bundle and return the exact approval needed to install it."""
     bundle = Path(bundle).resolve()
+    annotate_skill_quality(bundle)
     validation = validate_skill_bundle(bundle)
-    if not validation["valid"] or validation["simulated"]:
-        raise ValueError("Only a valid, non-simulated Skill bundle can be prepared for installation.")
+    if not validation["valid"] or validation["simulated"] or not validation["quality"]["installable"]:
+        raise ValueError("Only a valid, non-simulated Skill bundle that passes the quality gate can be prepared for installation.")
     target = _skill_install_target(bundle, destination)
     if target.exists():
         raise FileExistsError(f"Skill installation target already exists: {target}")
@@ -768,6 +976,7 @@ def prepare_skill_install(bundle: Path, destination: Path | None = None) -> dict
         "workflow": manifest["workflow"],
         "evidence": manifest["evidence"],
         "validation": validation,
+        "quality": validation["quality"],
         "approval_id": approval_id,
         "approval_required": True,
         "message": "Explain the workflow and evidence to the user, then authorize this exact approval_id only after explicit confirmation.",
@@ -779,8 +988,8 @@ def install_skill(bundle: Path, approval_id: str, destination: Path | None = Non
     bundle = Path(bundle).resolve()
     target = _skill_install_target(bundle, destination)
     validation = validate_skill_bundle(bundle)
-    if not validation["valid"] or validation["simulated"]:
-        raise ValueError("Only a valid, non-simulated Skill bundle can be installed.")
+    if not validation["valid"] or validation["simulated"] or not validation["quality"]["installable"]:
+        raise ValueError("Only a valid, non-simulated Skill bundle that passes the quality gate can be installed.")
     if target.exists():
         raise FileExistsError(f"Skill installation target already exists: {target}")
     expected = approval_fingerprint(

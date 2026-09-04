@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from core import (
-    analyze_habits, analyze_sequences, authorize_once, context, correct_memory,
+    analyze_habits, analyze_sequences, annotate_skill_quality, assess_skill_quality, authorize_once, context, correct_memory,
     compile_skill, demo, doctor, draft_skill, export_data, forget, forget_all,
     install_skill, memory_history, observe, prepare_skill_install, quickstart, remember, review_action,
     validate_skill_bundle, weekly_report,
@@ -64,6 +64,10 @@ def main() -> int:
     item.add_argument("--plugin-root", type=Path)
     item = sub.add_parser("validate-skill")
     item.add_argument("bundle", type=Path)
+    item = sub.add_parser("assess-skill")
+    item.add_argument("bundle", type=Path)
+    item = sub.add_parser("annotate-skill")
+    item.add_argument("bundle", type=Path)
     item = sub.add_parser("prepare-skill-install")
     item.add_argument("bundle", type=Path)
     item.add_argument("--destination", type=Path)
@@ -116,6 +120,10 @@ def main() -> int:
         result = doctor(args.plugin_root)
     elif args.command == "validate-skill":
         result = validate_skill_bundle(args.bundle)
+    elif args.command == "assess-skill":
+        result = assess_skill_quality(args.bundle)
+    elif args.command == "annotate-skill":
+        result = annotate_skill_quality(args.bundle)
     elif args.command == "prepare-skill-install":
         result = prepare_skill_install(args.bundle, args.destination)
     elif args.command == "install-skill":

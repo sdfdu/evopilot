@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 import sys
 sys.path.insert(0,str(ROOT/"plugins"/"evopilot"/"scripts"))
-from core import analyze_habits, analyze_sequences, authorize_once, compile_skill, connect, context, demo, doctor, draft_skill, forget, forget_all, install_skill, memories, memory_history, observe, prepare_skill_install, promotion_notice, quickstart, remember, review_action, validate_skill_bundle, weekly_report
+from core import analyze_habits, analyze_sequences, annotate_skill_quality, assess_skill_quality, authorize_once, compile_skill, connect, context, demo, doctor, draft_skill, forget, forget_all, install_skill, memories, memory_history, observe, prepare_skill_install, promotion_notice, quickstart, remember, review_action, validate_skill_bundle, weekly_report
 
 class EvoPilotTests(unittest.TestCase):
  def setUp(self):
@@ -69,7 +69,10 @@ class EvoPilotTests(unittest.TestCase):
    self.assertTrue(result["validation"]["valid"])
    self.assertEqual(result["validation"]["score"],100)
    self.assertEqual(result["validation"]["recommendation"],"ready_for_human_review")
+   self.assertTrue(result["quality"]["installable"])
+   self.assertTrue(Path(result["quality_path"]).is_file())
    self.assertIn("human approval",text)
+   self.assertIn("## Decision rules",text)
    self.assertIn('"observations": 5',evidence)
 
  def test_compile_alias_demo_and_doctor(self):
@@ -111,6 +114,51 @@ class EvoPilotTests(unittest.TestCase):
   workflow=analyze_sequences(3,2)[0]
   with tempfile.TemporaryDirectory() as drafts:
    with self.assertRaises(ValueError):draft_skill(workflow["fingerprint"],Path(drafts))
+
+ def test_quality_annotations_block_thin_skill_installation(self):
+  with tempfile.TemporaryDirectory() as output:
+   for index in range(5):
+    session=f"thin-{index}"
+    observe("workspace","inspect","success",session_id=session)
+    observe("terminal","test","success",session_id=session)
+   workflow=analyze_sequences(3,2)[0]
+   artifact=compile_skill(workflow["fingerprint"],Path(output))
+   bundle=Path(artifact["bundle"])
+   skill_file=bundle/"SKILL.md"
+   text=skill_file.read_text(encoding="utf-8")
+   text=text.replace("## Decision rules","## Notes").replace("## Validation","## Checks").replace("## Stop conditions","## Boundaries")
+   skill_file.write_text(text,encoding="utf-8")
+   quality=assess_skill_quality(bundle)
+   self.assertFalse(quality["installable"])
+   self.assertEqual(quality["level"],"needs_revision")
+   codes={item["code"] for item in quality["annotations"]}
+   self.assertIn("missing-decision-rules",codes)
+   self.assertIn("missing-validation-contract",codes)
+   self.assertIn("missing-stop-conditions",codes)
+   annotated=annotate_skill_quality(bundle)
+   self.assertEqual(annotated["score"],quality["score"])
+   self.assertTrue(Path(annotated["report_path"]).is_file())
+   manifest=json.loads((bundle/"evopilot.json").read_text(encoding="utf-8"))
+   self.assertEqual(manifest["quality"]["annotations"],quality["annotations"])
+   self.assertEqual(validate_skill_bundle(bundle)["recommendation"],"needs_quality_revision")
+   with tempfile.TemporaryDirectory() as skills:
+    with self.assertRaises(ValueError):
+     prepare_skill_install(bundle,Path(skills))
+
+ def test_generic_tool_sequence_is_not_promoted_or_installable(self):
+  for index in range(8):
+   session=f"generic-{index}"
+   observe("workspace","edit","success",session_id=session)
+   observe("terminal","shell","success",session_id=session)
+  workflow=analyze_sequences(3,2)[0]
+  self.assertIsNone(promotion_notice())
+  with tempfile.TemporaryDirectory() as output, tempfile.TemporaryDirectory() as skills:
+   compiled=compile_skill(workflow["fingerprint"],Path(output))
+   self.assertFalse(compiled["quality"]["installable"])
+   codes={item["code"] for item in compiled["quality"]["annotations"]}
+   self.assertIn("generic-tool-sequence",codes)
+   with self.assertRaises(ValueError):
+    prepare_skill_install(Path(compiled["bundle"]),Path(skills))
 
  def test_ready_workflow_is_announced_and_requires_exact_install_approval(self):
   for index in range(5):

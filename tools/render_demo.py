@@ -57,20 +57,22 @@ STORY = [
         "4. Inspect the artifact",
         [
             ("file", "SKILL.md       workflow instructions + safety boundaries"),
-            ("file", "evopilot.json  provenance + evidence + pending_human_review"),
+            ("file", "evopilot.json  provenance + evidence + quality annotations"),
+            ("file", "QUALITY_REPORT.md  score + actionable findings"),
         ],
     ),
     (
-        "5. Validate before review",
+        "5. Validate structure and quality",
         [
-            ("evopilot", "Quality score: 100 / 100  |  all structural checks passed"),
+            ("evopilot", "Structure: 100 / 100  |  semantic quality: high"),
+            ("evopilot", "Generic or underspecified Skills are blocked from installation"),
             ("policy", "Does not execute the workflow or promise universal compatibility"),
         ],
     ),
     (
-        "6. Human review stays in control",
+        "6. Exact approval stays in control",
         [
-            ("policy", "Generated Skill is NOT installed automatically"),
+            ("policy", "Reviewed bundle + destination require one-time confirmation"),
             ("policy", "New permissions, publishing, and destructive actions require approval"),
         ],
     ),

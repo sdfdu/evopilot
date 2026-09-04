@@ -1,6 +1,6 @@
 {
   "name": "evopilot",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A local-first workflow compiler that turns repeated successful work into evidence-backed, portable Agent Skills.",
   "author": {
     "name": "duke"
@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "EvoPilot",
     "shortDescription": "Turn repeated work into reusable Agent Skills.",
-    "longDescription": "EvoPilot measures privacy-minimized work outcomes, detects repeated successful workflows, and compiles them into portable Open Agent Skills bundles with provenance and evidence. Deterministic validation checks structure, evidence, thresholds, and safety before human review, while risky actions require an exact one-time approval.",
+    "longDescription": "EvoPilot measures privacy-minimized work outcomes, detects repeated successful workflows, and compiles them into portable Open Agent Skills bundles with provenance, evidence, quality scores, and actionable annotations. Structural and semantic gates block weak Skills before exact one-time installation approval.",
     "developerName": "duke",
     "category": "Productivity",
     "capabilities": [

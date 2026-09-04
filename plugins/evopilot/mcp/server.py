@@ -10,13 +10,13 @@ from pathlib import Path
 ROOT = Path(os.environ.get("PLUGIN_ROOT", Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(ROOT / "scripts"))
 from core import (  # noqa: E402
-    analyze_habits, analyze_sequences, authorize_once, context, correct_memory,
+    analyze_habits, analyze_sequences, annotate_skill_quality, assess_skill_quality, authorize_once, context, correct_memory,
     compile_skill, demo, doctor, draft_skill, export_data, forget, forget_all,
     install_skill, memory_history, observe, prepare_skill_install, quickstart, remember, review_action,
     validate_skill_bundle, weekly_report,
 )
 
-SERVER_VERSION = "0.4.0"
+SERVER_VERSION = "0.5.0"
 FALLBACK_PROTOCOL_VERSION = "2025-06-18"
 
 TOOLS = [
@@ -35,6 +35,8 @@ TOOLS = [
     {"name": "evopilot_quickstart", "description": "Return copy-pasteable first-run instructions for using EvoPilot in Codex.", "inputSchema": {"type": "object", "properties": {}}},
     {"name": "evopilot_doctor", "description": "Check the local runtime, required plugin files, and database health without returning stored memory content.", "inputSchema": {"type": "object", "properties": {"plugin_root": {"type": "string"}}}},
     {"name": "evopilot_validate_skill", "description": "Structurally validate and score a compiled Skill bundle without executing or installing it.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}}, "required": ["bundle"]}},
+    {"name": "evopilot_assess_skill_quality", "description": "Score a Skill's semantic usefulness and return actionable severity-coded annotations without changing it.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}}, "required": ["bundle"]}},
+    {"name": "evopilot_annotate_skill_quality", "description": "Refresh a Skill bundle's machine-readable quality metadata and human-readable QUALITY_REPORT.md.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}}, "required": ["bundle"]}},
     {"name": "evopilot_prepare_skill_install", "description": "Validate a generated Skill and return its evidence plus the exact one-time approval ID required for installation.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}, "destination": {"type": "string"}}, "required": ["bundle"]}},
     {"name": "evopilot_install_skill", "description": "Install one reviewed Skill bundle after explicit user confirmation and exact one-time approval.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}, "approval_id": {"type": "string", "pattern": "^[0-9a-f]{24}$"}, "destination": {"type": "string"}}, "required": ["bundle", "approval_id"]}},
     {"name": "evopilot_weekly_report", "description": "Produce a concise evidence-based learning report for the last 1-90 days.", "inputSchema": {"type": "object", "properties": {"days": {"type": "integer", "minimum": 1, "maximum": 90}}}},
@@ -80,6 +82,10 @@ def call(name, args):
         return content(doctor(Path(args["plugin_root"]) if args.get("plugin_root") else None))
     if name == "evopilot_validate_skill":
         return content(validate_skill_bundle(Path(args["bundle"])))
+    if name == "evopilot_assess_skill_quality":
+        return content(assess_skill_quality(Path(args["bundle"])))
+    if name == "evopilot_annotate_skill_quality":
+        return content(annotate_skill_quality(Path(args["bundle"])))
     if name == "evopilot_prepare_skill_install":
         return content(prepare_skill_install(Path(args["bundle"]), Path(args["destination"]) if args.get("destination") else None))
     if name == "evopilot_install_skill":

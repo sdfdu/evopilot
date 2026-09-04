@@ -16,6 +16,14 @@
 - Import/export compatibility tests instead of unverified platform claims.
 - Workflow diff, activation, rollback, and quality scoring.
 
+## 0.5 - Skill quality and curation
+
+- Separate structural validation from semantic quality scoring. Done.
+- Generate human-readable and machine-readable quality annotations. Done.
+- Block generic or underspecified Skills from installation. Done.
+- Filter generic and duplicate sequences from automatic promotion. Done.
+- Add behavioral replay evaluation beyond deterministic checks.
+
 ## 0.5 — App packs
 
 - Browser research pack.
