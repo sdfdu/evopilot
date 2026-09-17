@@ -3,6 +3,7 @@
 - Add Behavior Cloning Lite: structured episodes, workflow fingerprints, evidence scoring, reviewed promotion, retirement, and token-capped runtime context.
 - Keep full episodes out of prompts; runtime context returns only promoted policy cards under a deterministic token budget.
 - Add `observe-episode`, `workflows`, `promote-policy`, `retire-policy`, and `runtime-context` commands plus matching MCP tools.
+- Keep MCP runtime-focused at 18 tools; debug, reporting, onboarding, export, aliases, and quality annotation remain available through the CLI.
 - Add regression coverage for behavior policy promotion gates, correction blocking, high-risk blocking, retirement, and runtime context limits.
 - Harden the Codex defaults installer so existing disabled EvoPilot config is updated safely and CI can skip Codex CLI calls with `EVOPILOT_SKIP_CODEX_CLI=1`.
 - Use `python3` in public onboarding paths for macOS-friendly first-run commands.

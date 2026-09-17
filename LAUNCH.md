@@ -18,7 +18,7 @@ EvoPilot records privacy-minimized outcomes, finds sequences that repeatedly wor
 
 The difficult part is deciding what should not become a Skill. Separate structural and semantic gates reject generic, repetitive, low-evidence, or underspecified bundles. Installation requires an exact, short-lived, one-time approval bound to the reviewed contents and destination.
 
-The runtime is dependency-free Python and SQLite. The repository includes a deterministic 60-second demo, local diagnostics, six Codex Skills, lifecycle hooks, a 28-tool MCP server, and 27 behavior-focused tests.
+The runtime is dependency-free Python and SQLite. The repository includes a deterministic 60-second demo, local diagnostics, six Codex Skills, lifecycle hooks, an 18-tool runtime MCP server, full CLI, and 27 behavior-focused tests.
 
 Repository: https://github.com/sdfdu/evopilot
 

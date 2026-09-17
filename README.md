@@ -95,7 +95,7 @@ See [How to use EvoPilot](docs/how-to-use.md) for real-work commands, [Behavior 
 - Portable Skill compilation with provenance and review state.
 - Structural validation plus semantic quality assessment and annotations.
 - Install blocking for generic, repetitive, unsafe, low-evidence, or underspecified Skills.
-- A dependency-free MCP server exposing 28 inspectable tools.
+- A dependency-free MCP server exposing 18 runtime-focused tools, with the full surface available through the CLI.
 - Six focused Skills for ideation, development, tool operation, coaching, monitoring, and extension creation.
 - A deterministic demo, diagnostics, weekly reports, and 27 behavior-focused tests.
 

@@ -10,10 +10,9 @@ from pathlib import Path
 ROOT = Path(os.environ.get("PLUGIN_ROOT", Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(ROOT / "scripts"))
 from core import (  # noqa: E402
-    analyze_habits, analyze_sequences, annotate_skill_quality, assess_skill_quality, authorize_once, context, correct_memory,
-    behavior_workflows,
-    compile_skill, demo, doctor, draft_skill, export_data, forget, forget_all,
-    install_skill, memory_history, observe, observe_episode, prepare_skill_install, promote_policy, quickstart, remember,
+    analyze_sequences, authorize_once, context, correct_memory,
+    compile_skill, doctor, forget,
+    install_skill, observe, observe_episode, prepare_skill_install, promote_policy, remember,
     retire_policy, review_action, runtime_context, validate_skill_bundle, weekly_report,
 )
 
@@ -24,31 +23,21 @@ TOOLS = [
     {"name": "evopilot_observe", "description": "Record a privacy-minimized work observation and outcome for later workflow analysis.", "inputSchema": {"type": "object", "properties": {"app": {"type": "string"}, "action": {"type": "string"}, "outcome": {"type": "string", "enum": ["unknown", "success", "failure", "abandoned"]}, "session_id": {"type": "string"}}, "required": ["app", "action"]}},
     {"name": "evopilot_remember", "description": "Store a non-sensitive explicit or inferred preference. Inferences never silently replace conflicting values.", "inputSchema": {"type": "object", "properties": {"key": {"type": "string"}, "value": {"type": "string"}, "scope": {"type": "string"}, "confidence": {"type": "number", "minimum": 0, "maximum": 1}, "source": {"type": "string", "enum": ["explicit", "inferred"]}}, "required": ["key", "value"]}},
     {"name": "evopilot_correct_memory", "description": "Explicitly correct a memory while preserving its history.", "inputSchema": {"type": "object", "properties": {"key": {"type": "string"}, "value": {"type": "string"}, "scope": {"type": "string"}}, "required": ["key", "value"]}},
-    {"name": "evopilot_memory_history", "description": "Inspect memory creation, confirmation, correction, conflict, and deletion events.", "inputSchema": {"type": "object", "properties": {"key": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 200}}}},
     {"name": "evopilot_forget", "description": "Delete one memory by exact key while retaining a deletion audit event.", "inputSchema": {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}},
-    {"name": "evopilot_forget_all", "description": "Delete every stored memory while retaining deletion audit events.", "inputSchema": {"type": "object", "properties": {}}},
     {"name": "evopilot_context", "description": "Retrieve concise relevant memories and learned workflows for the current scope.", "inputSchema": {"type": "object", "properties": {"scope": {"type": "string"}}}},
-    {"name": "evopilot_analyze_habits", "description": "Detect repeated individual actions without inferring a preference from one event.", "inputSchema": {"type": "object", "properties": {"min_count": {"type": "integer", "minimum": 2, "maximum": 20}}}},
     {"name": "evopilot_analyze_sequences", "description": "Detect repeated two-to-four-step workflows and measure their outcomes.", "inputSchema": {"type": "object", "properties": {"min_count": {"type": "integer", "minimum": 2, "maximum": 20}, "max_length": {"type": "integer", "minimum": 2, "maximum": 6}}}},
     {"name": "evopilot_observe_episode", "description": "Record one privacy-minimized behavior-cloning episode as structured steps, validation, and outcome.", "inputSchema": {"type": "object", "properties": {"task_type": {"type": "string"}, "steps": {"type": "array", "items": {"type": "string"}, "minItems": 2}, "outcome": {"type": "string", "enum": ["success", "failure", "abandoned", "corrected"]}, "validation_steps": {"type": "array", "items": {"type": "string"}}, "decision_points": {"type": "array", "items": {"type": "string"}}, "risk_level": {"type": "string", "enum": ["low", "medium", "high", "unknown"]}}, "required": ["task_type", "steps"]}},
-    {"name": "evopilot_behavior_workflows", "description": "List behavior-cloning workflow fingerprints, evidence, promotion status, and short policy cards.", "inputSchema": {"type": "object", "properties": {"task_type": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 100}}}},
     {"name": "evopilot_promote_policy", "description": "Promote a qualified behavior workflow into a short reviewed policy card for token-capped runtime retrieval.", "inputSchema": {"type": "object", "properties": {"fingerprint": {"type": "string"}}, "required": ["fingerprint"]}},
     {"name": "evopilot_retire_policy", "description": "Retire a behavior policy so it is no longer returned in runtime context.", "inputSchema": {"type": "object", "properties": {"fingerprint": {"type": "string"}}, "required": ["fingerprint"]}},
     {"name": "evopilot_runtime_context", "description": "Return a deterministic, token-capped behavior policy context for a task type without replaying episodes.", "inputSchema": {"type": "object", "properties": {"task_type": {"type": "string"}, "token_budget": {"type": "integer", "minimum": 40, "maximum": 1000}}, "required": ["task_type"]}},
-    {"name": "evopilot_draft_skill", "description": "Create an uninstalled Skill draft only from a workflow that passed evidence thresholds.", "inputSchema": {"type": "object", "properties": {"fingerprint": {"type": "string"}, "destination": {"type": "string"}}, "required": ["fingerprint", "destination"]}},
     {"name": "evopilot_compile_skill", "description": "Compile an evidence-backed workflow into a portable Open Agent Skills bundle for validation and review.", "inputSchema": {"type": "object", "properties": {"fingerprint": {"type": "string"}, "destination": {"type": "string"}}, "required": ["fingerprint", "destination"]}},
-    {"name": "evopilot_demo", "description": "Show a deterministic simulated workflow-compiler demo without changing learned user data; optionally write a review-only bundle.", "inputSchema": {"type": "object", "properties": {"destination": {"type": "string"}}}},
-    {"name": "evopilot_quickstart", "description": "Return copy-pasteable first-run instructions for using EvoPilot in Codex.", "inputSchema": {"type": "object", "properties": {}}},
     {"name": "evopilot_doctor", "description": "Check the local runtime, required plugin files, and database health without returning stored memory content.", "inputSchema": {"type": "object", "properties": {"plugin_root": {"type": "string"}}}},
     {"name": "evopilot_validate_skill", "description": "Structurally validate and score a compiled Skill bundle without executing or installing it.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}}, "required": ["bundle"]}},
-    {"name": "evopilot_assess_skill_quality", "description": "Score a Skill's semantic usefulness and return actionable severity-coded annotations without changing it.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}}, "required": ["bundle"]}},
-    {"name": "evopilot_annotate_skill_quality", "description": "Refresh a Skill bundle's machine-readable quality metadata and human-readable QUALITY_REPORT.md.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}}, "required": ["bundle"]}},
     {"name": "evopilot_prepare_skill_install", "description": "Validate a generated Skill and return its evidence plus the exact one-time approval ID required for installation.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}, "destination": {"type": "string"}}, "required": ["bundle"]}},
     {"name": "evopilot_install_skill", "description": "Install one reviewed Skill bundle after explicit user confirmation and exact one-time approval.", "inputSchema": {"type": "object", "properties": {"bundle": {"type": "string"}, "approval_id": {"type": "string", "pattern": "^[0-9a-f]{24}$"}, "destination": {"type": "string"}}, "required": ["bundle", "approval_id"]}},
     {"name": "evopilot_weekly_report", "description": "Produce a concise evidence-based learning report for the last 1-90 days.", "inputSchema": {"type": "object", "properties": {"days": {"type": "integer", "minimum": 1, "maximum": 90}}}},
     {"name": "evopilot_review_action", "description": "Classify a proposed action. Unknown or dangerous actions require a person.", "inputSchema": {"type": "object", "properties": {"action": {"type": "string"}, "details": {"type": "string"}}, "required": ["action"]}},
     {"name": "evopilot_authorize_once", "description": "After explicit human confirmation, authorize the exact action ID blocked by the safety gate for one use within ten minutes.", "inputSchema": {"type": "object", "properties": {"approval_id": {"type": "string", "pattern": "^[0-9a-f]{24}$"}, "label": {"type": "string"}}, "required": ["approval_id"]}},
-    {"name": "evopilot_export", "description": "Export local learning data and audit history to JSON. Stored approvals are excluded.", "inputSchema": {"type": "object", "properties": {"destination": {"type": "string"}}, "required": ["destination"]}},
 ]
 
 
@@ -64,44 +53,26 @@ def call(name, args):
         return content(remember(args["key"], args["value"], scope=args.get("scope", "global"), confidence=float(args.get("confidence", 0.6)), source=args.get("source", "explicit")))
     if name == "evopilot_correct_memory":
         return content(correct_memory(args["key"], args["value"], scope=args.get("scope")))
-    if name == "evopilot_memory_history":
-        return content(memory_history(args.get("key"), int(args.get("limit", 50))))
     if name == "evopilot_forget":
         return content({"forgotten": forget(args["key"])})
-    if name == "evopilot_forget_all":
-        return content(forget_all())
     if name == "evopilot_context":
         return content(context(args.get("scope", "global")))
-    if name == "evopilot_analyze_habits":
-        return content(analyze_habits(int(args.get("min_count", 3))))
     if name == "evopilot_analyze_sequences":
         return content(analyze_sequences(int(args.get("min_count", 3)), int(args.get("max_length", 4))))
     if name == "evopilot_observe_episode":
         return content(observe_episode(args["task_type"], list(args["steps"]), args.get("outcome", "success"), validation_steps=args.get("validation_steps", []), decision_points=args.get("decision_points", []), risk_level=args.get("risk_level", "low")))
-    if name == "evopilot_behavior_workflows":
-        return content(behavior_workflows(args.get("task_type"), int(args.get("limit", 20))))
     if name == "evopilot_promote_policy":
         return content(promote_policy(args["fingerprint"]))
     if name == "evopilot_retire_policy":
         return content(retire_policy(args["fingerprint"]))
     if name == "evopilot_runtime_context":
         return content(runtime_context(args["task_type"], int(args.get("token_budget", 250))))
-    if name == "evopilot_draft_skill":
-        return content(draft_skill(args["fingerprint"], Path(args["destination"])))
     if name == "evopilot_compile_skill":
         return content(compile_skill(args["fingerprint"], Path(args["destination"])))
-    if name == "evopilot_demo":
-        return content(demo(Path(args["destination"]) if args.get("destination") else None))
-    if name == "evopilot_quickstart":
-        return content(quickstart())
     if name == "evopilot_doctor":
         return content(doctor(Path(args["plugin_root"]) if args.get("plugin_root") else None))
     if name == "evopilot_validate_skill":
         return content(validate_skill_bundle(Path(args["bundle"])))
-    if name == "evopilot_assess_skill_quality":
-        return content(assess_skill_quality(Path(args["bundle"])))
-    if name == "evopilot_annotate_skill_quality":
-        return content(annotate_skill_quality(Path(args["bundle"])))
     if name == "evopilot_prepare_skill_install":
         return content(prepare_skill_install(Path(args["bundle"]), Path(args["destination"]) if args.get("destination") else None))
     if name == "evopilot_install_skill":
@@ -112,8 +83,6 @@ def call(name, args):
         return content(review_action(args["action"], args.get("details", "")))
     if name == "evopilot_authorize_once":
         return content(authorize_once(args["approval_id"], args.get("label", "human-confirmed action")))
-    if name == "evopilot_export":
-        return content({"path": str(export_data(Path(args["destination"])))})
     raise ValueError(f"Unknown tool: {name}")
 
 
