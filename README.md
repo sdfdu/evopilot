@@ -2,7 +2,7 @@
 
 # EvoPilot
 
-### Turn repeated AI-agent work into evidence-backed, quality-checked Skills.
+### Turn repeated AI-agent work into evidence-backed Skills and token-capped behavior policies.
 
 [![CI](https://github.com/sdfdu/evopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/sdfdu/evopilot/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/sdfdu/evopilot)](https://github.com/sdfdu/evopilot/releases)
@@ -12,7 +12,7 @@
 
 ![EvoPilot workflow compiler demo](docs/demo.gif)
 
-AI agents repeatedly rediscover useful workflows. EvoPilot observes privacy-minimized outcomes, detects sequences that consistently work, and compiles qualified workflows into portable [Open Agent Skills](https://agentskills.io/) bundles.
+AI agents repeatedly rediscover useful workflows. EvoPilot observes privacy-minimized outcomes, detects sequences that consistently work, compiles qualified workflows into portable [Open Agent Skills](https://agentskills.io/) bundles, and promotes stable behavior fingerprints into short runtime policy cards.
 
 It does not train model weights, store raw tool logs, or silently expand permissions. Every generated bundle includes its evidence, provenance, review state, and quality findings.
 
@@ -23,9 +23,9 @@ Requirements: Python 3.10+.
 ```bash
 git clone https://github.com/sdfdu/evopilot.git
 cd evopilot
-python plugins/evopilot/scripts/evopilot.py doctor
-python plugins/evopilot/scripts/evopilot.py demo --destination ./evopilot-demo
-python plugins/evopilot/scripts/evopilot.py validate-skill ./evopilot-demo/workspace-inspect-workspace-apply-patch-terminal
+python3 plugins/evopilot/scripts/evopilot.py doctor
+python3 plugins/evopilot/scripts/evopilot.py demo --destination ./evopilot-demo
+python3 plugins/evopilot/scripts/evopilot.py validate-skill ./evopilot-demo/workspace-inspect-workspace-apply-patch-terminal
 ```
 
 The deterministic demo is marked `demo_only` and never enters learned history. Inspect these files:
@@ -84,19 +84,20 @@ To make EvoPilot the default workflow layer for future tasks:
 ./scripts/install-codex-defaults.sh
 ```
 
-See [How to use EvoPilot](docs/how-to-use.md) for real-work commands and the Skill review flow.
+See [How to use EvoPilot](docs/how-to-use.md) for real-work commands, [Behavior Cloning Lite](docs/behavior-cloning-lite.md) for token-capped policy learning, and the Skill review flow.
 
 ## What ships today
 
 - Local SQLite memory with corrections, conflicts, history, evidence, and confidence decay.
 - Privacy-minimized Codex hooks and a fail-closed safety gate.
 - Repeated workflow detection with visible evidence thresholds.
+- Behavior Cloning Lite: episode fingerprints, promoted policy cards, and token-capped runtime context.
 - Portable Skill compilation with provenance and review state.
 - Structural validation plus semantic quality assessment and annotations.
 - Install blocking for generic, repetitive, unsafe, low-evidence, or underspecified Skills.
-- A dependency-free MCP server exposing 23 inspectable tools.
+- A dependency-free MCP server exposing 28 inspectable tools.
 - Six focused Skills for ideation, development, tool operation, coaching, monitoring, and extension creation.
-- A deterministic demo, diagnostics, weekly reports, and 24 behavioral tests.
+- A deterministic demo, diagnostics, weekly reports, and 27 behavior-focused tests.
 
 ## Safety boundaries
 
@@ -116,7 +117,7 @@ EvoPilot complements Codex sandboxing, operating-system permissions, and service
 
 ## Limits
 
-- Workflow detection uses transparent sequence mining, not model training or semantic imitation.
+- Workflow detection uses transparent sequence mining and policy-card behavior cloning, not model-weight training.
 - Hooks observe Codex tool events, not every gesture inside arbitrary desktop applications.
 - Validation checks the bundle; it does not prove every workflow succeeds in every environment.
 - EvoPilot does not generate or enable credentialed MCP servers automatically.
@@ -125,9 +126,9 @@ EvoPilot complements Codex sandboxing, operating-system permissions, and service
 ## Development
 
 ```bash
-python -m unittest discover -s tests -v
-python plugins/evopilot/scripts/evopilot.py doctor --plugin-root plugins/evopilot
-python tools/render_demo.py
+python3 -m unittest discover -s tests -v
+python3 plugins/evopilot/scripts/evopilot.py doctor --plugin-root plugins/evopilot
+python3 tools/render_demo.py
 ```
 
 See [Contributing](CONTRIBUTING.md), [Roadmap](ROADMAP.md), [Security](SECURITY.md), [Support](SUPPORT.md), [Privacy](docs/privacy.md), and [Quality gates](docs/quality-gates.md).

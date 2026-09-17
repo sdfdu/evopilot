@@ -1,7 +1,7 @@
 {
   "name": "evopilot",
-  "version": "0.5.0",
-  "description": "A local-first workflow compiler that turns repeated AI-agent work into evidence-backed, quality-checked Skills.",
+  "version": "0.6.0",
+  "description": "A local-first workflow compiler that turns repeated AI-agent work into evidence-backed Skills and token-capped behavior policies.",
   "author": {
     "name": "duke"
   },
@@ -19,8 +19,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "EvoPilot",
-    "shortDescription": "Turn repeated work into quality-checked Skills.",
-    "longDescription": "EvoPilot measures privacy-minimized work outcomes, detects repeated successful workflows, and compiles them into portable Open Agent Skills bundles with provenance, evidence, quality scores, and actionable annotations. Structural and semantic gates block weak Skills before exact one-time installation approval.",
+    "shortDescription": "Turn repeated work into Skills and behavior policies.",
+    "longDescription": "EvoPilot measures privacy-minimized work outcomes, detects repeated successful workflows, compiles qualified work into portable Open Agent Skills, and promotes stable behavior fingerprints into short token-capped policy cards. Structural and semantic gates block weak Skills before exact one-time installation approval.",
     "developerName": "duke",
     "category": "Productivity",
     "capabilities": [

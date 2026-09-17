@@ -36,5 +36,5 @@ body:
     id: doctor
     attributes:
       label: Doctor output
-      description: Paste `python plugins/evopilot/scripts/evopilot.py doctor` output when available. Remove private paths if needed.
+      description: Paste `python3 plugins/evopilot/scripts/evopilot.py doctor` output when available. Remove private paths if needed.
       render: json

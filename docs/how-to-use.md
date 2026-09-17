@@ -32,11 +32,12 @@ Then work normally. EvoPilot records privacy-minimized tool categories and outco
 ## Useful commands
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py quickstart
-python plugins/evopilot/scripts/evopilot.py doctor
-python plugins/evopilot/scripts/evopilot.py context
-python plugins/evopilot/scripts/evopilot.py sequences
-python plugins/evopilot/scripts/evopilot.py report --days 7
+python3 plugins/evopilot/scripts/evopilot.py quickstart
+python3 plugins/evopilot/scripts/evopilot.py doctor
+python3 plugins/evopilot/scripts/evopilot.py context
+python3 plugins/evopilot/scripts/evopilot.py sequences
+python3 plugins/evopilot/scripts/evopilot.py workflows
+python3 plugins/evopilot/scripts/evopilot.py report --days 7
 ```
 
 ## Compile a workflow
@@ -44,22 +45,35 @@ python plugins/evopilot/scripts/evopilot.py report --days 7
 When `sequences` or `report` shows a `draft_ready` or `stable` workflow:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> ./drafts
-python plugins/evopilot/scripts/evopilot.py validate-skill ./drafts/<skill-name>
+python3 plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> ./drafts
+python3 plugins/evopilot/scripts/evopilot.py validate-skill ./drafts/<skill-name>
 ```
 
 Review `SKILL.md`, `evopilot.json`, and `WHAT_HAPPENED.md` before installing or sharing the bundle.
+
+## Promote a behavior policy
+
+Behavior Cloning Lite stores structured episodes and promotes only short policy cards, so full history does not enter prompts.
+
+```bash
+python3 plugins/evopilot/scripts/evopilot.py observe-episode --task-type repo_onboarding --step inspect --step apply_patch --step test --outcome success
+python3 plugins/evopilot/scripts/evopilot.py workflows --task-type repo_onboarding
+python3 plugins/evopilot/scripts/evopilot.py promote-policy <fingerprint>
+python3 plugins/evopilot/scripts/evopilot.py runtime-context --task-type repo_onboarding --token-budget 250
+```
+
+Use `retire-policy <fingerprint>` when a policy should stop being returned.
 
 ## Reset memory
 
 Forget one memory:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py forget <key>
+python3 plugins/evopilot/scripts/evopilot.py forget <key>
 ```
 
 Forget all stored memories while retaining deletion audit events:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py forget --all
+python3 plugins/evopilot/scripts/evopilot.py forget --all
 ```

@@ -21,7 +21,7 @@ Repeated actions become habit candidates. Repeated multi-step work becomes workf
 At task startup, EvoPilot tells the agent when the strongest learned workflow reaches `draft_ready` or `stable`. The agent explains the evidence before compiling:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> ./drafts
+python3 plugins/evopilot/scripts/evopilot.py compile-skill <fingerprint> ./drafts
 ```
 
 The output bundle contains:
@@ -34,7 +34,7 @@ The output bundle contains:
 ## 4. Validate
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py validate-skill ./drafts/<skill-name>
+python3 plugins/evopilot/scripts/evopilot.py validate-skill ./drafts/<skill-name>
 ```
 
 Validation checks structure, evidence arithmetic, promotion thresholds, safety boundaries, human review state, and portable format. It does not execute the workflow.
@@ -42,8 +42,8 @@ Validation checks structure, evidence arithmetic, promotion thresholds, safety b
 Assess semantic quality and refresh annotations after any manual edit:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py assess-skill ./drafts/<skill-name>
-python plugins/evopilot/scripts/evopilot.py annotate-skill ./drafts/<skill-name>
+python3 plugins/evopilot/scripts/evopilot.py assess-skill ./drafts/<skill-name>
+python3 plugins/evopilot/scripts/evopilot.py annotate-skill ./drafts/<skill-name>
 ```
 
 Purely generic tool sequences and bundles missing decision, validation, or stop guidance are annotated and can be blocked from installation. See [quality-gates.md](quality-gates.md).
@@ -63,14 +63,14 @@ A person should confirm:
 Prepare the exact installation after review:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py prepare-skill-install ./drafts/<skill-name>
+python3 plugins/evopilot/scripts/evopilot.py prepare-skill-install ./drafts/<skill-name>
 ```
 
 The result contains an approval ID bound to the reviewed bundle contents and destination. After the user explicitly confirms that exact installation, authorize the ID and install:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py approve <approval-id>
-python plugins/evopilot/scripts/evopilot.py install-skill ./drafts/<skill-name> <approval-id>
+python3 plugins/evopilot/scripts/evopilot.py approve <approval-id>
+python3 plugins/evopilot/scripts/evopilot.py install-skill ./drafts/<skill-name> <approval-id>
 ```
 
 The approval expires after ten minutes, works once, and becomes invalid if the bundle changes. Discard weak, stale, overbroad, or unsafe bundles.

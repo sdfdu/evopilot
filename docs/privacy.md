@@ -28,8 +28,8 @@ Promotion-ready workflows are announced automatically. Generated Skills are vali
 Use:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py export ./evopilot-export.json
-python plugins/evopilot/scripts/evopilot.py forget --all
+python3 plugins/evopilot/scripts/evopilot.py export ./evopilot-export.json
+python3 plugins/evopilot/scripts/evopilot.py forget --all
 ```
 
 Exports exclude active one-time approvals.

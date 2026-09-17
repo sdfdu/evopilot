@@ -8,9 +8,10 @@ from pathlib import Path
 
 from core import (
     analyze_habits, analyze_sequences, annotate_skill_quality, assess_skill_quality, authorize_once, context, correct_memory,
+    behavior_workflows,
     compile_skill, demo, doctor, draft_skill, export_data, forget, forget_all,
-    install_skill, memory_history, observe, prepare_skill_install, quickstart, remember, review_action,
-    validate_skill_bundle, weekly_report,
+    install_skill, memory_history, observe, observe_episode, prepare_skill_install, promote_policy, quickstart, remember,
+    retire_policy, review_action, runtime_context, validate_skill_bundle, weekly_report,
 )
 
 
@@ -46,6 +47,23 @@ def main() -> int:
     item = sub.add_parser("sequences")
     item.add_argument("--min-count", type=int, default=3)
     item.add_argument("--max-length", type=int, default=4)
+    item = sub.add_parser("observe-episode")
+    item.add_argument("--task-type", required=True)
+    item.add_argument("--step", action="append", required=True)
+    item.add_argument("--outcome", default="success", choices=["success", "failure", "abandoned", "corrected"])
+    item.add_argument("--validation-step", action="append", default=[])
+    item.add_argument("--decision-point", action="append", default=[])
+    item.add_argument("--risk-level", default="low", choices=["low", "medium", "high", "unknown"])
+    item = sub.add_parser("workflows")
+    item.add_argument("--task-type")
+    item.add_argument("--limit", type=int, default=20)
+    item = sub.add_parser("promote-policy")
+    item.add_argument("fingerprint")
+    item = sub.add_parser("retire-policy")
+    item.add_argument("fingerprint")
+    item = sub.add_parser("runtime-context")
+    item.add_argument("--task-type", required=True)
+    item.add_argument("--token-budget", type=int, default=250)
     item = sub.add_parser("review")
     item.add_argument("action")
     item.add_argument("--details", default="")
@@ -106,6 +124,24 @@ def main() -> int:
         result = analyze_habits(args.min_count)
     elif args.command == "sequences":
         result = analyze_sequences(args.min_count, args.max_length)
+    elif args.command == "observe-episode":
+        result = observe_episode(
+            args.task_type,
+            args.step,
+            args.outcome,
+            validation_steps=args.validation_step,
+            decision_points=args.decision_point,
+            risk_level=args.risk_level,
+        )
+    elif args.command == "workflows":
+        result = behavior_workflows(args.task_type, args.limit)
+    elif args.command == "promote-policy":
+        result = promote_policy(args.fingerprint)
+    elif args.command == "retire-policy":
+        result = retire_policy(args.fingerprint)
+    elif args.command == "runtime-context":
+        print(runtime_context(args.task_type, args.token_budget))
+        return 0
     elif args.command == "review":
         result = review_action(args.action, args.details)
     elif args.command == "approve":

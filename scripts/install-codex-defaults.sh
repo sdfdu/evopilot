@@ -17,9 +17,13 @@ else
   exit 1
 fi
 
-if command -v codex >/dev/null 2>&1; then
-  codex plugin marketplace add sdfdu/evopilot || true
-  codex plugin add evopilot@evopilot || true
+if [ "${EVOPILOT_SKIP_CODEX_CLI:-0}" != "1" ] && command -v codex >/dev/null 2>&1; then
+  if ! codex plugin marketplace add sdfdu/evopilot; then
+    printf '%s\n' "Warning: codex marketplace setup failed; applying config fallback." >&2
+  fi
+  if ! codex plugin add evopilot@evopilot; then
+    printf '%s\n' "Warning: codex plugin setup failed; applying config fallback." >&2
+  fi
 fi
 
 "$PYTHON_BIN" - "$CONFIG_FILE" "$AGENTS_FILE" <<'PY'
@@ -32,24 +36,44 @@ agents_path = Path(sys.argv[2])
 
 config = config_path.read_text(encoding="utf-8")
 
-blocks = [
-    (
-        '[marketplaces.evopilot]',
-        '[marketplaces.evopilot]\nsource_type = "git"\nsource = "https://github.com/sdfdu/evopilot.git"\n',
-    ),
-    (
-        '[plugins."evopilot@evopilot"]',
-        '[plugins."evopilot@evopilot"]\nenabled = true\n',
-    ),
-]
+def upsert_table(text: str, header: str, values: dict[str, str]) -> str:
+    pattern = re.compile(
+        rf"(?ms)^(?P<header>{re.escape(header)}\n)(?P<body>.*?)(?=^\[|\Z)"
+    )
+    match = pattern.search(text)
+    if not match:
+        block = header + "\n" + "".join(f"{key} = {value}\n" for key, value in values.items())
+        if text and not text.endswith("\n"):
+            text += "\n"
+        if text.strip():
+            text += "\n"
+        return text + block
 
-for header, block in blocks:
-    if header not in config:
-        if config and not config.endswith("\n"):
-            config += "\n"
-        if config.strip():
-            config += "\n"
-        config += block
+    body = match.group("body")
+    for key, value in values.items():
+        key_pattern = re.compile(rf"(?m)^({re.escape(key)}\s*=\s*).*$")
+        replacement = rf"\g<1>{value}"
+        if key_pattern.search(body):
+            body = key_pattern.sub(replacement, body, count=1)
+        else:
+            if body and not body.endswith("\n"):
+                body += "\n"
+            body += f"{key} = {value}\n"
+    return text[:match.start("body")] + body + text[match.end("body"):]
+
+config = upsert_table(
+    config,
+    "[marketplaces.evopilot]",
+    {
+        "source_type": '"git"',
+        "source": '"https://github.com/sdfdu/evopilot.git"',
+    },
+)
+config = upsert_table(
+    config,
+    '[plugins."evopilot@evopilot"]',
+    {"enabled": "true"},
+)
 
 config_path.write_text(config, encoding="utf-8")
 

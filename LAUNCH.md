@@ -2,23 +2,23 @@
 
 ## One-line pitch
 
-EvoPilot is a local-first workflow compiler that turns repeated AI-agent work into evidence-backed, quality-checked Skills.
+EvoPilot is a local-first workflow compiler that turns repeated AI-agent work into evidence-backed Skills and token-capped behavior policies.
 
 ## Show HN
 
 ### Title
 
-Show HN: EvoPilot – compile repeated AI-agent workflows into quality-checked Skills
+Show HN: EvoPilot – compile repeated AI-agent workflows into Skills and behavior policies
 
 ### Post
 
 I built EvoPilot because useful agent workflows usually disappear into chat history and prompt fragments.
 
-EvoPilot records privacy-minimized outcomes, finds sequences that repeatedly work, and compiles qualified workflows into portable Open Agent Skills bundles. Each bundle contains the workflow, provenance, evidence, review state, and quality findings.
+EvoPilot records privacy-minimized outcomes, finds sequences that repeatedly work, compiles qualified workflows into portable Open Agent Skills bundles, and promotes stable fingerprints into short policy cards that do not replay history into the prompt. Each bundle contains the workflow, provenance, evidence, review state, and quality findings.
 
 The difficult part is deciding what should not become a Skill. Separate structural and semantic gates reject generic, repetitive, low-evidence, or underspecified bundles. Installation requires an exact, short-lived, one-time approval bound to the reviewed contents and destination.
 
-The runtime is dependency-free Python and SQLite. The repository includes a deterministic 60-second demo, local diagnostics, six Codex Skills, lifecycle hooks, a 23-tool MCP server, and 24 behavioral tests.
+The runtime is dependency-free Python and SQLite. The repository includes a deterministic 60-second demo, local diagnostics, six Codex Skills, lifecycle hooks, a 28-tool MCP server, and 27 behavior-focused tests.
 
 Repository: https://github.com/sdfdu/evopilot
 
@@ -28,7 +28,7 @@ I would especially value feedback on the evidence thresholds and which cross-age
 
 I built EvoPilot: a local-first workflow compiler for AI agents.
 
-It detects repeated successful work and compiles it into a portable Agent Skill with evidence, provenance, and install-blocking quality checks. No model-weight training, raw tool logs, or silent permission growth.
+It detects repeated successful work, compiles it into portable Agent Skills, and promotes stable behavior fingerprints into short runtime policy cards. No model-weight training, raw tool logs, or silent permission growth.
 
 60-second demo: https://github.com/sdfdu/evopilot
 

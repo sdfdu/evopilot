@@ -10,11 +10,11 @@ class McpTests(unittest.TestCase):
    result=subprocess.run([sys.executable,str(ROOT/"plugins"/"evopilot"/"mcp"/"server.py")],input=requests,text=True,capture_output=True,env=env,check=True)
    lines=[json.loads(x) for x in result.stdout.splitlines()]
    self.assertEqual(lines[0]["result"]["serverInfo"]["name"],"evopilot")
-   self.assertEqual(lines[0]["result"]["serverInfo"]["version"],"0.5.0")
+   self.assertEqual(lines[0]["result"]["serverInfo"]["version"],"0.6.0")
    self.assertEqual(lines[0]["result"]["protocolVersion"],"2026-07-28")
    self.assertIn("tools",lines[0]["result"]["capabilities"])
    names={tool["name"] for tool in lines[1]["result"]["tools"]}
-   self.assertEqual(len(names),23)
+   self.assertEqual(len(names),28)
    self.assertIn("evopilot_analyze_sequences",names)
    self.assertIn("evopilot_weekly_report",names)
    self.assertIn("evopilot_authorize_once",names)
@@ -28,6 +28,11 @@ class McpTests(unittest.TestCase):
    self.assertIn("evopilot_annotate_skill_quality",names)
    self.assertIn("evopilot_prepare_skill_install",names)
    self.assertIn("evopilot_install_skill",names)
+   self.assertIn("evopilot_observe_episode",names)
+   self.assertIn("evopilot_behavior_workflows",names)
+   self.assertIn("evopilot_promote_policy",names)
+   self.assertIn("evopilot_retire_policy",names)
+   self.assertIn("evopilot_runtime_context",names)
 
  def test_installed_plugin_path_with_spaces_and_unicode(self):
   with tempfile.TemporaryDirectory() as temp:
@@ -38,7 +43,7 @@ class McpTests(unittest.TestCase):
    result=subprocess.run([sys.executable,str(installed/"mcp"/"server.py")],input=requests,text=True,capture_output=True,env=env,check=True)
    lines=[json.loads(x) for x in result.stdout.splitlines()]
    self.assertEqual(lines[0]["result"]["protocolVersion"],"2025-11-25")
-   self.assertEqual(len(lines[1]["result"]["tools"]),23)
+   self.assertEqual(len(lines[1]["result"]["tools"]),28)
    self.assertEqual(result.stderr,"")
 
 if __name__=="__main__":unittest.main()

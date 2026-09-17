@@ -8,12 +8,12 @@
 - Structural validation and semantic quality annotations.
 - Install blocking for generic, repetitive, unsafe, low-evidence, or underspecified Skills.
 - Exact one-time approval for reviewed Skill installation.
+- Behavior Cloning Lite with structured episodes, policy promotion, retirement, and token-capped runtime context.
 
 ## Next
 
-- Behavioral replay evaluation beyond deterministic checks.
+- Behavior policy diff, rollback, and measured before/after results.
 - Verified compatibility tests for agents that implement Open Agent Skills.
-- Workflow diff, rollback, and measured before/after results.
 - Focused development and browser-research workflow examples.
 
 ## Principles

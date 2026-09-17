@@ -11,12 +11,13 @@ ROOT = Path(os.environ.get("PLUGIN_ROOT", Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(ROOT / "scripts"))
 from core import (  # noqa: E402
     analyze_habits, analyze_sequences, annotate_skill_quality, assess_skill_quality, authorize_once, context, correct_memory,
+    behavior_workflows,
     compile_skill, demo, doctor, draft_skill, export_data, forget, forget_all,
-    install_skill, memory_history, observe, prepare_skill_install, quickstart, remember, review_action,
-    validate_skill_bundle, weekly_report,
+    install_skill, memory_history, observe, observe_episode, prepare_skill_install, promote_policy, quickstart, remember,
+    retire_policy, review_action, runtime_context, validate_skill_bundle, weekly_report,
 )
 
-SERVER_VERSION = "0.5.0"
+SERVER_VERSION = "0.6.0"
 FALLBACK_PROTOCOL_VERSION = "2025-06-18"
 
 TOOLS = [
@@ -29,6 +30,11 @@ TOOLS = [
     {"name": "evopilot_context", "description": "Retrieve concise relevant memories and learned workflows for the current scope.", "inputSchema": {"type": "object", "properties": {"scope": {"type": "string"}}}},
     {"name": "evopilot_analyze_habits", "description": "Detect repeated individual actions without inferring a preference from one event.", "inputSchema": {"type": "object", "properties": {"min_count": {"type": "integer", "minimum": 2, "maximum": 20}}}},
     {"name": "evopilot_analyze_sequences", "description": "Detect repeated two-to-four-step workflows and measure their outcomes.", "inputSchema": {"type": "object", "properties": {"min_count": {"type": "integer", "minimum": 2, "maximum": 20}, "max_length": {"type": "integer", "minimum": 2, "maximum": 6}}}},
+    {"name": "evopilot_observe_episode", "description": "Record one privacy-minimized behavior-cloning episode as structured steps, validation, and outcome.", "inputSchema": {"type": "object", "properties": {"task_type": {"type": "string"}, "steps": {"type": "array", "items": {"type": "string"}, "minItems": 2}, "outcome": {"type": "string", "enum": ["success", "failure", "abandoned", "corrected"]}, "validation_steps": {"type": "array", "items": {"type": "string"}}, "decision_points": {"type": "array", "items": {"type": "string"}}, "risk_level": {"type": "string", "enum": ["low", "medium", "high", "unknown"]}}, "required": ["task_type", "steps"]}},
+    {"name": "evopilot_behavior_workflows", "description": "List behavior-cloning workflow fingerprints, evidence, promotion status, and short policy cards.", "inputSchema": {"type": "object", "properties": {"task_type": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 100}}}},
+    {"name": "evopilot_promote_policy", "description": "Promote a qualified behavior workflow into a short reviewed policy card for token-capped runtime retrieval.", "inputSchema": {"type": "object", "properties": {"fingerprint": {"type": "string"}}, "required": ["fingerprint"]}},
+    {"name": "evopilot_retire_policy", "description": "Retire a behavior policy so it is no longer returned in runtime context.", "inputSchema": {"type": "object", "properties": {"fingerprint": {"type": "string"}}, "required": ["fingerprint"]}},
+    {"name": "evopilot_runtime_context", "description": "Return a deterministic, token-capped behavior policy context for a task type without replaying episodes.", "inputSchema": {"type": "object", "properties": {"task_type": {"type": "string"}, "token_budget": {"type": "integer", "minimum": 40, "maximum": 1000}}, "required": ["task_type"]}},
     {"name": "evopilot_draft_skill", "description": "Create an uninstalled Skill draft only from a workflow that passed evidence thresholds.", "inputSchema": {"type": "object", "properties": {"fingerprint": {"type": "string"}, "destination": {"type": "string"}}, "required": ["fingerprint", "destination"]}},
     {"name": "evopilot_compile_skill", "description": "Compile an evidence-backed workflow into a portable Open Agent Skills bundle for validation and review.", "inputSchema": {"type": "object", "properties": {"fingerprint": {"type": "string"}, "destination": {"type": "string"}}, "required": ["fingerprint", "destination"]}},
     {"name": "evopilot_demo", "description": "Show a deterministic simulated workflow-compiler demo without changing learned user data; optionally write a review-only bundle.", "inputSchema": {"type": "object", "properties": {"destination": {"type": "string"}}}},
@@ -70,6 +76,16 @@ def call(name, args):
         return content(analyze_habits(int(args.get("min_count", 3))))
     if name == "evopilot_analyze_sequences":
         return content(analyze_sequences(int(args.get("min_count", 3)), int(args.get("max_length", 4))))
+    if name == "evopilot_observe_episode":
+        return content(observe_episode(args["task_type"], list(args["steps"]), args.get("outcome", "success"), validation_steps=args.get("validation_steps", []), decision_points=args.get("decision_points", []), risk_level=args.get("risk_level", "low")))
+    if name == "evopilot_behavior_workflows":
+        return content(behavior_workflows(args.get("task_type"), int(args.get("limit", 20))))
+    if name == "evopilot_promote_policy":
+        return content(promote_policy(args["fingerprint"]))
+    if name == "evopilot_retire_policy":
+        return content(retire_policy(args["fingerprint"]))
+    if name == "evopilot_runtime_context":
+        return content(runtime_context(args["task_type"], int(args.get("token_budget", 250))))
     if name == "evopilot_draft_skill":
         return content(draft_skill(args["fingerprint"], Path(args["destination"])))
     if name == "evopilot_compile_skill":

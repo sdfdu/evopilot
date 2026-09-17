@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 import sys
 sys.path.insert(0,str(ROOT/"plugins"/"evopilot"/"scripts"))
-from core import analyze_habits, analyze_sequences, annotate_skill_quality, assess_skill_quality, authorize_once, compile_skill, connect, context, demo, doctor, draft_skill, forget, forget_all, install_skill, memories, memory_history, observe, prepare_skill_install, promotion_notice, quickstart, remember, review_action, validate_skill_bundle, weekly_report
+from core import analyze_habits, analyze_sequences, annotate_skill_quality, assess_skill_quality, authorize_once, behavior_workflows, compile_skill, connect, context, demo, doctor, draft_skill, forget, forget_all, install_skill, memories, memory_history, observe, observe_episode, prepare_skill_install, promote_policy, promotion_notice, quickstart, remember, retire_policy, review_action, runtime_context, validate_skill_bundle, weekly_report
 
 class EvoPilotTests(unittest.TestCase):
  def setUp(self):
@@ -189,6 +189,44 @@ class EvoPilotTests(unittest.TestCase):
    with self.assertRaises(PermissionError):
     install_skill(Path(compiled["bundle"]),prepared["approval_id"],Path(skills))
 
+ def test_behavior_policy_promotion_and_token_capped_runtime_context(self):
+  latest=None
+  for _ in range(5):
+   latest=observe_episode(
+    "repo onboarding",
+    ["inspect", "apply_patch", "test", "doctor"],
+    "success",
+    validation_steps=["syntax check", "unit tests", "doctor"],
+    decision_points=["preserve user config with managed blocks"],
+   )
+  self.assertIsNotNone(latest)
+  self.assertEqual(latest["status"],"promotable")
+  fingerprint=latest["fingerprint"]
+  promoted=promote_policy(fingerprint)
+  self.assertEqual(promoted["status"],"promoted")
+  workflows=behavior_workflows("repo onboarding")
+  self.assertEqual(workflows[0]["fingerprint"],fingerprint)
+  context_text=runtime_context("repo onboarding",120)
+  self.assertIn("Relevant EvoPilot behavior policy",context_text)
+  self.assertIn("Inspect the smallest relevant surface",context_text)
+  self.assertNotIn("preserve user config with managed blocks",context_text)
+  self.assertLessEqual(len(context_text.split()),120)
+  retired=retire_policy(fingerprint)
+  self.assertEqual(retired["status"],"retired")
+  self.assertEqual(runtime_context("repo onboarding",120),"")
+
+ def test_behavior_policy_requires_clean_successful_evidence(self):
+  for _ in range(4):
+   observe_episode("release",["inspect","test"],"success")
+  candidate=observe_episode("release",["inspect","test"],"corrected")
+  self.assertEqual(candidate["status"],"candidate")
+  with self.assertRaises(ValueError):
+   promote_policy(candidate["fingerprint"])
+  high_risk=observe_episode("deploy",["inspect","publish"],"success",risk_level="high")
+  for _ in range(4):
+   high_risk=observe_episode("deploy",["inspect","publish"],"success",risk_level="high")
+  self.assertEqual(high_risk["status"],"candidate")
+
  def test_weekly_report_is_evidence_based(self):
   observe("terminal","test","success",session_id="report")
   observe("terminal","test","failure",session_id="report")
@@ -199,6 +237,7 @@ class EvoPilotTests(unittest.TestCase):
  def test_quickstart_is_copy_pasteable(self):
   guide=quickstart()
   self.assertIn("Run the EvoPilot 60-second workflow compiler demo.",guide)
+  self.assertIn("python3 plugins/evopilot/scripts/evopilot.py doctor",guide)
   self.assertIn("forget --all",guide)
 
  def test_v1_database_migrates_without_data_loss(self):

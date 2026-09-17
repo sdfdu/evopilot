@@ -13,7 +13,7 @@ From a clone of this repository:
 The installer is safe to run more than once. It:
 
 - enables the EvoPilot marketplace and plugin when the `codex` CLI is available;
-- falls back to appending missing `~/.codex/config.toml` blocks when the CLI is unavailable;
+- falls back to creating or updating the relevant `~/.codex/config.toml` tables when the CLI is unavailable;
 - creates or updates an EvoPilot-managed block in `~/.codex/AGENTS.md`;
 - leaves unrelated user settings untouched.
 
@@ -51,3 +51,13 @@ codex plugin add evopilot@evopilot
 ```
 
 Then add the managed block above to `~/.codex/AGENTS.md`, restart Codex, and begin a new task.
+
+## Automation and tests
+
+Set `EVOPILOT_SKIP_CODEX_CLI=1` to skip `codex plugin ...` commands while still applying the local config and `AGENTS.md` updates:
+
+```bash
+EVOPILOT_SKIP_CODEX_CLI=1 ./scripts/install-codex-defaults.sh
+```
+
+This is useful for CI, dry-run style validation with a temporary `CODEX_HOME`, or environments where the Codex CLI is intentionally unavailable.

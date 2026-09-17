@@ -15,8 +15,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "0.5.0"
-SCHEMA_VERSION = 2
+VERSION = "0.6.0"
+SCHEMA_VERSION = 3
 SENSITIVE = re.compile(
     r"(api[_ -]?key|access[_ -]?token|refresh[_ -]?token|token|password|passcode|"
     r"secret|credential|private[_ -]?key|ssh[_ -]?key|authorization|"
@@ -36,6 +36,10 @@ MEMORY_SOURCES = {"explicit", "inferred"}
 ACTIVE_MEMORY = "active"
 DECAY_HALF_LIFE_DAYS = 90
 APPROVAL_TTL_MINUTES = 10
+POLICY_PROMOTION_MIN_OBSERVATIONS = 5
+POLICY_PROMOTION_MIN_SUCCESSES = 3
+POLICY_PROMOTION_MIN_SUCCESS_RATE = 0.75
+POLICY_CONTEXT_TOKEN_BUDGET = 250
 
 
 def utc_now() -> str:
@@ -108,6 +112,19 @@ def connect() -> sqlite3.Connection:
         CREATE TABLE IF NOT EXISTS approvals(
           approval_id TEXT PRIMARY KEY, created_at TEXT NOT NULL, expires_at TEXT NOT NULL,
           consumed_at TEXT, label TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS episodes(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          created_at TEXT NOT NULL, task_type TEXT NOT NULL, fingerprint TEXT NOT NULL,
+          outcome TEXT NOT NULL, steps_json TEXT NOT NULL, validation_json TEXT NOT NULL,
+          decisions_json TEXT NOT NULL, risk_level TEXT NOT NULL, metadata_json TEXT NOT NULL DEFAULT '{}'
+        );
+        CREATE TABLE IF NOT EXISTS workflow_policies(
+          fingerprint TEXT PRIMARY KEY, task_type TEXT NOT NULL, steps_json TEXT NOT NULL,
+          observations INTEGER NOT NULL, success_count INTEGER NOT NULL, failure_count INTEGER NOT NULL,
+          correction_count INTEGER NOT NULL, success_rate REAL NOT NULL, status TEXT NOT NULL,
+          risk_level TEXT NOT NULL, policy_card TEXT NOT NULL, token_cost INTEGER NOT NULL,
+          created_at TEXT NOT NULL, updated_at TEXT NOT NULL
         );
         """
     )
@@ -268,6 +285,242 @@ def memory_history(key: str | None = None, limit: int = 50) -> list[dict[str, An
     return [dict(row) for row in rows]
 
 
+def _clean_label(value: str, limit: int = 96) -> str:
+    value = re.sub(r"\s+", "_", value.strip().lower())[:limit]
+    if SENSITIVE.search(value):
+        raise ValueError("EvoPilot refuses to store secrets or credentials in behavior episodes.")
+    return value or "unknown"
+
+
+def _clean_text(value: str, limit: int = 180) -> str:
+    value = re.sub(r"\s+", " ", value.strip())[:limit]
+    if SENSITIVE.search(value):
+        raise ValueError("EvoPilot refuses to store sensitive text in behavior episodes.")
+    return value
+
+
+def _token_estimate(text: str) -> int:
+    return max(1, int(len(re.findall(r"\S+", text)) * 1.3))
+
+
+def _policy_status(observations: int, successes: int, corrections: int, success_rate: float, risk_level: str, existing: str = "") -> str:
+    if existing == "retired":
+        return "retired"
+    if existing == "promoted":
+        return "promoted"
+    if (
+        observations >= POLICY_PROMOTION_MIN_OBSERVATIONS
+        and successes >= POLICY_PROMOTION_MIN_SUCCESSES
+        and corrections == 0
+        and success_rate >= POLICY_PROMOTION_MIN_SUCCESS_RATE
+        and risk_level != "high"
+    ):
+        return "promotable"
+    return "candidate"
+
+
+def _policy_rule_for_step(step: str) -> str:
+    action = _step_action(step)
+    rules = {
+        "inspect": "Inspect the smallest relevant surface before editing.",
+        "git_read": "Check repository state before changing tracked files.",
+        "edit": "Keep edits scoped and preserve unrelated user work.",
+        "apply_patch": "Use precise patches for reviewable local changes.",
+        "test": "Run targeted tests before broader verification.",
+        "build": "Run the relevant build or static check when behavior may change.",
+        "document": "Update user-facing docs when setup or workflow behavior changes.",
+        "doctor": "Run doctor diagnostics after changing plugin setup or runtime behavior.",
+    }
+    return rules.get(action, f"Use `{step}` only when it materially advances the task.")
+
+
+def _build_policy_card(task_type: str, steps: list[str], validation_steps: list[str]) -> str:
+    rules: list[str] = []
+    for step in steps:
+        rule = _policy_rule_for_step(step)
+        if rule not in rules:
+            rules.append(rule)
+        if len(rules) >= 3:
+            break
+    validation = validation_steps[:2] or ["Verify the smallest observable outcome."]
+    lines = [f"For `{task_type}`:"]
+    lines += [f"- {rule}" for rule in rules]
+    lines += [f"- Validate with: {', '.join(validation)}."]
+    return "\n".join(lines)
+
+
+def _recompute_policy(db: sqlite3.Connection, fingerprint: str) -> dict[str, Any]:
+    rows = db.execute("SELECT * FROM episodes WHERE fingerprint=? ORDER BY id", (fingerprint,)).fetchall()
+    if not rows:
+        raise ValueError("Unknown behavior workflow fingerprint.")
+    first = rows[0]
+    task_type = str(first["task_type"])
+    steps = json.loads(first["steps_json"])
+    validation_steps = json.loads(first["validation_json"])
+    outcomes = Counter(str(row["outcome"]) for row in rows)
+    observations = len(rows)
+    successes = outcomes["success"]
+    failures = outcomes["failure"] + outcomes["abandoned"]
+    corrections = outcomes["corrected"]
+    completed = successes + failures + corrections
+    success_rate = successes / completed if completed else 0.0
+    risk_order = {"low": 0, "medium": 1, "unknown": 2, "high": 3}
+    risk_level = max((str(row["risk_level"]) for row in rows), key=lambda item: risk_order.get(item, 2))
+    existing = db.execute("SELECT status,created_at FROM workflow_policies WHERE fingerprint=?", (fingerprint,)).fetchone()
+    policy_card = _build_policy_card(task_type, steps, validation_steps)
+    token_cost = _token_estimate(policy_card)
+    status = _policy_status(observations, successes, corrections, success_rate, risk_level, str(existing["status"]) if existing else "")
+    created_at = str(existing["created_at"]) if existing else utc_now()
+    db.execute(
+        """
+        INSERT INTO workflow_policies(
+          fingerprint,task_type,steps_json,observations,success_count,failure_count,
+          correction_count,success_rate,status,risk_level,policy_card,token_cost,created_at,updated_at
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(fingerprint) DO UPDATE SET
+          observations=excluded.observations,
+          success_count=excluded.success_count,
+          failure_count=excluded.failure_count,
+          correction_count=excluded.correction_count,
+          success_rate=excluded.success_rate,
+          status=excluded.status,
+          risk_level=excluded.risk_level,
+          policy_card=excluded.policy_card,
+          token_cost=excluded.token_cost,
+          updated_at=excluded.updated_at
+        """,
+        (
+            fingerprint, task_type, json.dumps(steps, ensure_ascii=False), observations, successes, failures,
+            corrections, success_rate, status, risk_level, policy_card, token_cost, created_at, utc_now(),
+        ),
+    )
+    return {
+        "fingerprint": fingerprint,
+        "task_type": task_type,
+        "steps": steps,
+        "observations": observations,
+        "success_count": successes,
+        "failure_count": failures,
+        "correction_count": corrections,
+        "success_rate": round(success_rate, 3),
+        "status": status,
+        "risk_level": risk_level,
+        "policy_card": policy_card,
+        "token_cost": token_cost,
+    }
+
+
+def observe_episode(
+    task_type: str,
+    steps: list[str],
+    outcome: str = "success",
+    *,
+    validation_steps: list[str] | None = None,
+    decision_points: list[str] | None = None,
+    risk_level: str = "low",
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Record a privacy-minimized behavior-cloning episode and refresh its workflow policy."""
+    if outcome not in {"success", "failure", "abandoned", "corrected"}:
+        raise ValueError("Episode outcome must be success, failure, abandoned, or corrected.")
+    cleaned_steps = [_clean_label(step) for step in steps if step.strip()]
+    if len(cleaned_steps) < 2:
+        raise ValueError("A behavior episode needs at least two steps.")
+    cleaned_task = _clean_label(task_type)
+    cleaned_validation = [_clean_text(step) for step in (validation_steps or []) if step.strip()][:5]
+    cleaned_decisions = [_clean_text(step) for step in (decision_points or []) if step.strip()][:5]
+    risk = risk_level if risk_level in {"low", "medium", "high", "unknown"} else "unknown"
+    fingerprint = "policy::" + hashlib.sha256((cleaned_task + "\n" + "\n".join(cleaned_steps)).encode("utf-8")).hexdigest()[:16]
+    with database() as db:
+        cur = db.execute(
+            """
+            INSERT INTO episodes(created_at,task_type,fingerprint,outcome,steps_json,validation_json,decisions_json,risk_level,metadata_json)
+            VALUES(?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                utc_now(), cleaned_task, fingerprint, outcome,
+                json.dumps(cleaned_steps, ensure_ascii=False),
+                json.dumps(cleaned_validation, ensure_ascii=False),
+                json.dumps(cleaned_decisions, ensure_ascii=False),
+                risk,
+                json.dumps(safe_metadata(metadata), ensure_ascii=False),
+            ),
+        )
+        policy = _recompute_policy(db, fingerprint)
+    return {"episode_id": int(cur.lastrowid), **policy}
+
+
+def behavior_workflows(task_type: str | None = None, limit: int = 20) -> list[dict[str, Any]]:
+    with database() as db:
+        if task_type:
+            rows = db.execute(
+                "SELECT * FROM workflow_policies WHERE task_type=? ORDER BY status DESC, success_rate DESC, observations DESC LIMIT ?",
+                (_clean_label(task_type), limit),
+            ).fetchall()
+        else:
+            rows = db.execute(
+                "SELECT * FROM workflow_policies ORDER BY status DESC, success_rate DESC, observations DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+    result = []
+    for row in rows:
+        item = dict(row)
+        item["steps"] = json.loads(str(row["steps_json"]))
+        item.pop("steps_json", None)
+        item["success_rate"] = round(float(row["success_rate"]), 3)
+        result.append(item)
+    return result
+
+
+def promote_policy(fingerprint: str) -> dict[str, Any]:
+    with database() as db:
+        row = db.execute("SELECT * FROM workflow_policies WHERE fingerprint=?", (fingerprint,)).fetchone()
+        if not row:
+            raise ValueError("Unknown behavior workflow fingerprint.")
+        refreshed = _recompute_policy(db, fingerprint)
+        if refreshed["status"] not in {"promotable", "promoted"}:
+            raise ValueError("Policy needs at least five observations, three successes, 75% success rate, no corrections, and non-high risk.")
+        db.execute("UPDATE workflow_policies SET status='promoted',updated_at=? WHERE fingerprint=?", (utc_now(), fingerprint))
+    return {**refreshed, "status": "promoted", "requires_human_review": True}
+
+
+def retire_policy(fingerprint: str) -> dict[str, Any]:
+    with database() as db:
+        row = db.execute("SELECT fingerprint FROM workflow_policies WHERE fingerprint=?", (fingerprint,)).fetchone()
+        if not row:
+            raise ValueError("Unknown behavior workflow fingerprint.")
+        db.execute("UPDATE workflow_policies SET status='retired',updated_at=? WHERE fingerprint=?", (utc_now(), fingerprint))
+    return {"fingerprint": fingerprint, "status": "retired"}
+
+
+def runtime_context(task_type: str, token_budget: int = POLICY_CONTEXT_TOKEN_BUDGET) -> str:
+    """Return a deterministic, token-capped behavior policy context."""
+    budget = max(40, min(1000, int(token_budget)))
+    task = _clean_label(task_type)
+    with database() as db:
+        rows = db.execute(
+            """
+            SELECT * FROM workflow_policies
+            WHERE task_type=? AND status='promoted' AND token_cost<=?
+            ORDER BY success_rate DESC, observations DESC, updated_at DESC
+            LIMIT 3
+            """,
+            (task, budget),
+        ).fetchall()
+    if not rows:
+        return ""
+    lines = ["Relevant EvoPilot behavior policy (episodes stay out of prompt):"]
+    used = _token_estimate(lines[0])
+    for row in rows:
+        card = str(row["policy_card"])
+        cost = _token_estimate(card)
+        if used + cost > budget:
+            continue
+        lines.append(card)
+        used += cost
+    return "\n".join(lines) if len(lines) > 1 else ""
+
+
 def _workflow_status(evidence: int, successes: int) -> str:
     if evidence >= 8 and successes >= 3:
         return "stable"
@@ -405,7 +658,11 @@ def startup_context(scope: str = "global") -> str:
     notice = promotion_notice()
     if notice:
         guidance += ["", notice]
-    return "\n".join(guidance + ["", context(scope)])
+    policy = runtime_context(scope, 180)
+    extras = [context(scope)]
+    if policy:
+        extras.insert(0, policy)
+    return "\n".join(guidance + [""] + extras)
 
 
 def promotion_notice() -> str | None:
@@ -440,6 +697,7 @@ def weekly_report(days: int = 7) -> str:
         rows = db.execute("SELECT action,outcome,duration_ms FROM observations WHERE created_at>=?", (since,)).fetchall()
         corrections = db.execute("SELECT COUNT(*) FROM memory_events WHERE created_at>=? AND event='corrected'", (since,)).fetchone()[0]
         conflicts = db.execute("SELECT COUNT(*) FROM memory_events WHERE created_at>=? AND event='conflict'", (since,)).fetchone()[0]
+        policies = db.execute("SELECT status,COUNT(*) count FROM workflow_policies GROUP BY status").fetchall()
     total = len(rows)
     outcomes = Counter(str(row["outcome"]) for row in rows)
     actions = Counter(str(row["action"]) for row in rows)
@@ -455,6 +713,8 @@ def weekly_report(days: int = 7) -> str:
         f"- Failures / abandoned: {outcomes['failure']} / {outcomes['abandoned']}",
         f"- Memory corrections / conflicts: {corrections} / {conflicts}",
     ]
+    if policies:
+        lines.append("- Behavior policies: " + ", ".join(f"{row['status']}={row['count']}" for row in policies))
     if durations:
         lines.append(f"- Average measured duration: {sum(durations) / len(durations):.0f} ms")
     lines += ["", "## Most-used actions"]
@@ -492,15 +752,15 @@ Use EvoPilot while we work. Remember explicit non-sensitive preferences, measure
 Useful local checks:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py doctor
-python plugins/evopilot/scripts/evopilot.py report --days 7
-python plugins/evopilot/scripts/evopilot.py sequences
+python3 plugins/evopilot/scripts/evopilot.py doctor
+python3 plugins/evopilot/scripts/evopilot.py report --days 7
+python3 plugins/evopilot/scripts/evopilot.py sequences
 ```
 
 Privacy reset:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py forget --all
+python3 plugins/evopilot/scripts/evopilot.py forget --all
 ```
 """
 
@@ -1079,6 +1339,8 @@ def export_data(destination: Path) -> Path:
             "memories": [dict(x) for x in db.execute("SELECT * FROM memories")],
             "memory_events": [dict(x) for x in db.execute("SELECT * FROM memory_events")],
             "workflows": [dict(x) for x in db.execute("SELECT * FROM workflows")],
+            "episodes": [dict(x) for x in db.execute("SELECT * FROM episodes")],
+            "workflow_policies": [dict(x) for x in db.execute("SELECT * FROM workflow_policies")],
             "observations": [dict(x) for x in db.execute("SELECT * FROM observations")],
             "audit": [dict(x) for x in db.execute("SELECT * FROM audit")],
         }

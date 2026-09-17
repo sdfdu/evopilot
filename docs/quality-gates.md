@@ -36,7 +36,7 @@ Every newly compiled bundle contains:
 After editing a bundle, refresh its annotations:
 
 ```bash
-python plugins/evopilot/scripts/evopilot.py annotate-skill ./drafts/<skill-name>
+python3 plugins/evopilot/scripts/evopilot.py annotate-skill ./drafts/<skill-name>
 ```
 
 Installation preparation refreshes annotations automatically. Approval is issued only when both structural validation and semantic quality pass.
