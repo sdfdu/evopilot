@@ -2,19 +2,42 @@
 
 # EvoPilot
 
-### Turn repeated AI-agent work into evidence-backed Skills and token-capped behavior policies.
+**A local-first workflow compiler for Codex**
 
 [![CI](https://github.com/sdfdu/evopilot/actions/workflows/ci.yml/badge.svg)](https://github.com/sdfdu/evopilot/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/sdfdu/evopilot)](https://github.com/sdfdu/evopilot/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[Install in Codex](#install-in-codex) · [Try the demo](#try-it-in-60-seconds) · [Browse skills](#one-codex-agent-multiple-skills) · [Developer guide](#development)
+[Install in Codex](#install-in-codex) · [Try the demo](#try-it-in-60-seconds) · [Browse skills](#one-codex-agent-multiple-skills) · [How it works](#how-it-works) · [Development](#development)
 
 </div>
 
-AI agents repeatedly rediscover useful workflows. EvoPilot observes privacy-minimized outcomes, detects sequences that consistently work, compiles qualified workflows into portable [Open Agent Skills](https://agentskills.io/) bundles, and promotes stable behavior fingerprints into short runtime policy cards.
+EvoPilot turns repeated successful work into portable [Open Agent Skills](https://agentskills.io/) and keeps frequently used workflow guidance available through token-capped policy cards.
 
 It does not train model weights, store raw tool logs, or silently expand permissions. Every generated bundle includes its evidence, provenance, review state, and quality findings.
+
+## Install in Codex
+
+Install the published plugin with the Codex CLI.
+
+```bash
+codex plugin marketplace add sdfdu/evopilot
+codex plugin add evopilot@evopilot
+```
+
+Restart Codex, start a new task, and ask:
+
+```text
+Run the EvoPilot 60-second workflow compiler demo.
+```
+
+To make EvoPilot the default workflow layer for future tasks, run this from the repository root. [Codex defaults setup](docs/codex-defaults.md)
+
+```bash
+./scripts/install-codex-defaults.sh
+```
+
+See [How to use EvoPilot](docs/how-to-use.md) for real-work commands, [Behavior Cloning Lite](docs/behavior-cloning-lite.md) for token-capped policy learning, and the Skill review flow.
 
 ## Try it in 60 seconds
 
@@ -53,22 +76,56 @@ evopilot-demo/workspace-inspect-workspace-apply-patch-terminal/
 
 EvoPilot is one Codex plugin. The active Codex agent can select several skills over the course of a task. Each bundled skill has its own `SKILL.md` with a description that helps Codex select it and instructions that guide the work.
 
+```mermaid
+flowchart TD
+    Request["Your task"] --> Agent["Codex agent"]
+    Agent --> Plan["Plan and deliver · 5 skills"]
+    Agent --> Research["Research and communicate · 3 skills"]
+    Agent --> Learn["Learn and improve workflows · 4 skills"]
+```
+
+### Plan and deliver
+
 | Skill | Use it to | Example request |
 | --- | --- | --- |
 | [`idea-lab`](plugins/evopilot/skills/idea-lab/SKILL.md) | Shape a rough idea into a decision | Help me choose a direction for this idea before we build. |
 | [`dev-flow`](plugins/evopilot/skills/dev-flow/SKILL.md) | Implement, debug, and verify software changes | Fix this bug and run the relevant tests. |
 | [`tool-operator`](plugins/evopilot/skills/tool-operator/SKILL.md) | Coordinate files, terminals, browsers, and apps | Find the local report and verify which version is current. |
-| [`knowledge-coach`](plugins/evopilot/skills/knowledge-coach/SKILL.md) | Organize what you learned and identify recurring friction | Summarize what I learned and what I kept getting stuck on. |
 | [`automation-watcher`](plugins/evopilot/skills/automation-watcher/SKILL.md) | Plan reminders and recurring checks | Remind me every Friday to review open tasks. |
-| [`extension-foundry`](plugins/evopilot/skills/extension-foundry/SKILL.md) | Turn proven workflows into reusable skills | Which repeated workflows are ready to become a skill? |
+| [`project-handoff`](plugins/evopilot/skills/project-handoff/SKILL.md) | Prepare a project handoff | Write a handoff so someone can resume this project tomorrow. |
+
+### Research and communicate
+
+| Skill | Use it to | Example request |
+| --- | --- | --- |
+| [`research-synthesis`](plugins/evopilot/skills/research-synthesis/SKILL.md) | Compare findings across research sources | Compare these papers and summarize what I can cite in my thesis. |
 | [`presentation-visual-design`](plugins/evopilot/skills/presentation-visual-design/SKILL.md) | Design, restyle, or visually review slides | Give this deck a consistent layout and improve chart readability. |
+| [`application-tailor`](plugins/evopilot/skills/application-tailor/SKILL.md) | Tailor an internship or job application | Prepare my application for an AI and ERP internship. |
+
+### Learn and improve workflows
+
+| Skill | Use it to | Example request |
+| --- | --- | --- |
+| [`knowledge-coach`](plugins/evopilot/skills/knowledge-coach/SKILL.md) | Organize what you learned and identify recurring friction | Summarize what I learned and what I kept getting stuck on. |
+| [`decision-capture`](plugins/evopilot/skills/decision-capture/SKILL.md) | Record confirmed decisions | Save why we chose option B. |
+| [`extension-foundry`](plugins/evopilot/skills/extension-foundry/SKILL.md) | Turn proven workflows into reusable skills | Which repeated workflows are ready to become a skill? |
+| [`skill-evaluator`](plugins/evopilot/skills/skill-evaluator/SKILL.md) | Check skill selection and behavior | Test what happens when I say to implement option B. |
 
 Ask in your own words, or pick the skill explicitly in a client that supports skill mentions. For example, select `evopilot:dev-flow` when you want to apply its coding and verification workflow.
 
 ## How it works
 
-```text
-work normally → measure outcomes → detect repeated success → compile → validate → review → install
+```mermaid
+flowchart TD
+    Work["Work in Codex"] --> Observe["Record tool categories and outcomes"]
+    Observe --> Detect["Detect repeated success"]
+    Detect --> Compile["Compile a portable skill bundle"]
+    Compile --> Validate{"Validation passes?"}
+    Validate -->|Yes| Review{"User approves this bundle and destination?"}
+    Validate -->|No| Revise["Revise the draft"]
+    Revise --> Validate
+    Review -->|Yes| Install["Install the reviewed skill"]
+    Review -->|No| Hold["Keep the bundle uninstalled"]
 ```
 
 1. Hooks record tool categories and outcomes, never raw arguments or responses.
@@ -77,46 +134,24 @@ work normally → measure outcomes → detect repeated success → compile → v
 4. Structural and semantic gates block generic, repetitive, unsafe, or underspecified Skills.
 5. Installation requires an exact one-time confirmation bound to the reviewed bundle and destination.
 
-| State | Evidence requirement |
-|---|---|
-| Candidate | At least 3 observations |
-| Draft ready | At least 5 observations and 3 successes |
-| Stable | At least 8 observations and 3 successes |
+### Evidence thresholds
 
-## Install in Codex
-
-Install the published plugin with the Codex CLI.
-
-```bash
-codex plugin marketplace add sdfdu/evopilot
-codex plugin add evopilot@evopilot
-```
-
-Restart Codex, start a new task, and ask:
-
-```text
-Run the EvoPilot 60-second workflow compiler demo.
-```
-
-To make EvoPilot the default workflow layer for future tasks, run this from the repository root. [Codex defaults setup](docs/codex-defaults.md)
-
-```bash
-./scripts/install-codex-defaults.sh
-```
-
-See [How to use EvoPilot](docs/how-to-use.md) for real-work commands, [Behavior Cloning Lite](docs/behavior-cloning-lite.md) for token-capped policy learning, and the Skill review flow.
+| Workflow state | Minimum observations | Minimum successes |
+| :--- | ---: | ---: |
+| Candidate | 3 | — |
+| Draft ready | 5 | 3 |
+| Stable | 8 | 3 |
 
 ## What ships today
 
-- Local SQLite memory with corrections, conflicts, history, evidence, and confidence decay.
-- Privacy-minimized Codex hooks and a fail-closed safety gate.
-- Repeated workflow detection with visible evidence thresholds.
-- Behavior Cloning Lite: episode fingerprints, promoted policy cards, and token-capped runtime context.
-- Portable Skill compilation with provenance and review state.
-- Structural validation plus semantic quality assessment and annotations.
-- Install blocking for generic, repetitive, unsafe, low-evidence, or underspecified Skills.
-- A dependency-free MCP server exposing 18 runtime-focused tools, with maintenance, demo, export, and compatibility commands available through the CLI.
-- A deterministic demo, diagnostics, and weekly reports.
+| Component | What it provides |
+| :--- | :--- |
+| Local memory | SQLite-backed history, corrections, conflict tracking, and confidence decay |
+| Codex hooks | Privacy-minimized observations and fail-closed action review |
+| Workflow compiler | Sequence detection, portable skill bundles, evidence, and provenance |
+| Quality checks | Structural validation, semantic assessment, and annotations for skill review |
+| Behavior Cloning Lite | Episode fingerprints and promoted policy cards in token-capped runtime context |
+| MCP and CLI | 18 runtime MCP tools, plus CLI maintenance, export, diagnostics, the deterministic demo, and weekly reports |
 
 ## Safety boundaries
 
